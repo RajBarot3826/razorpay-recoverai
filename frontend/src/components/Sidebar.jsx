@@ -3,12 +3,13 @@ import { useState } from 'react'
 export default function Sidebar({ activeTab, setActiveTab }) {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: '🏠' },
+    { id: 'sandbox', label: 'AI Sandbox', icon: '🧪', badge: 'LIVE' },
     { id: 'transactions', label: 'Transactions', icon: '📑' },
     { id: 'pipeline', label: 'Recovery Pipeline', icon: '🔄' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'customers', label: 'Customers', icon: '👥' },
     { id: 'insights', label: 'Insights', icon: '💡' },
-    { id: 'alerts', label: 'Alerts', icon: '🔔', badge: '7' },
+    { id: 'alerts', label: 'Alerts', icon: '🔔', badge: '4' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
   ]
 

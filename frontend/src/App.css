@@ -2213,3 +2213,309 @@ body {
   flex-direction: column;
   gap: 18px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   JUDGE PRESENTATION PRESET BANNER
+   ═══════════════════════════════════════════════════════════════════ */
+.judge-demo-banner {
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(139, 92, 246, 0.08));
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.judge-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.judge-badge-star {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #8b5cf6);
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.5px;
+}
+
+.judge-banner-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.judge-presets-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.judge-preset-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-body);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+}
+
+.judge-preset-btn:hover {
+  background: var(--color-blue);
+  color: #ffffff;
+  border-color: var(--color-blue);
+  transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AI SANDBOX PLAYGROUND STYLES
+   ═══════════════════════════════════════════════════════════════════ */
+.sandbox-presets-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sandbox-preset-chip {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sandbox-preset-chip:hover {
+  background: var(--color-blue-bg);
+  border-color: var(--color-blue);
+  color: var(--color-blue);
+}
+
+.sandbox-split-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.sandbox-input-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sandbox-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sandbox-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.sandbox-field-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.sandbox-input-currency-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--bg-page);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  padding: 0 12px;
+}
+
+.currency-symbol {
+  font-weight: 800;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.sandbox-input-field,
+.sandbox-select-field,
+.sandbox-textarea-field {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  background: var(--bg-page);
+  color: var(--text-dark);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.sandbox-input-currency-wrap .sandbox-input-field {
+  border: none;
+  background: transparent;
+  padding: 9px 6px;
+}
+
+.sandbox-input-field:focus,
+.sandbox-select-field:focus,
+.sandbox-textarea-field:focus {
+  border-color: var(--color-blue);
+}
+
+.sandbox-results-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.sandbox-output-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sandbox-steps-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sandbox-step-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-page);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border-left: 3px solid var(--color-blue);
+}
+
+.step-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--color-blue);
+  font-family: var(--font-mono);
+}
+
+.step-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.step-metric {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.root-cause-explanation {
+  font-size: 0.76rem;
+  color: var(--text-dark);
+  line-height: 1.35;
+}
+
+/* Simulated Smartphone WhatsApp Mockup */
+.phone-mockup-wrapper {
+  background: #efeae2;
+  border: 1px solid #d1d7db;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  margin-top: 4px;
+}
+
+.phone-header-bar {
+  background: #075e54;
+  color: #ffffff;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.phone-avatar {
+  font-size: 1.2rem;
+}
+
+.phone-contact-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.phone-contact-status {
+  font-size: 0.65rem;
+  opacity: 0.85;
+}
+
+.phone-message-bubble {
+  background: #ffffff;
+  margin: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border-top-left-radius: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.bubble-text {
+  font-size: 0.78rem;
+  color: #111b21;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.bubble-cta-btn {
+  display: inline-block;
+  background: #25d366;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.bubble-cta-btn:hover {
+  background: #128c7e;
+}
+
+.bubble-time {
+  align-self: flex-end;
+  font-size: 0.62rem;
+  color: #667781;
+}
+
+.sandbox-placeholder-card {
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 380px;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 4px;
+}

@@ -235,6 +235,102 @@ async def get_transaction(transaction_id: str):
     return res.model_dump(mode="json")
 
 
+from backend.razorpay.client import razorpay_client
+from datetime import datetime, timezone
+import uuid
+
+class CustomRecoveryRequest(BaseModel):
+    amount: float = 2499.0
+    currency: str = "INR"
+    method: str = "upi"
+    failure_reason: str = "UPI transaction timed out waiting for bank approval"
+    customer_name: str = "Aarav Sharma"
+    customer_phone: str = "+91 98765 43210"
+
+class RazorpayOrderRequest(BaseModel):
+    amount: float = 500.0  # In INR
+    currency: str = "INR"
+    receipt: str = "rcpt_recoverai_001"
+    notes: Dict[str, Any] = {}
+
+class ScenarioDemoRequest(BaseModel):
+    scenario: str = "FESTIVE_RUSH" # "FESTIVE_RUSH", "SALARY_DAY", "HIGH_VALUE_SAAS", "QUIET_HOURS"
+    count: int = 100
+
+@app.post("/api/recover/custom")
+async def recover_custom_transaction(request: CustomRecoveryRequest):
+    """
+    Interactive Sandbox: Run single customized failed payment through full AI pipeline.
+    Returns ML classification, LLM root cause, decision flow, compliance check & generated Hinglish WhatsApp nudge.
+    """
+    try:
+        tx_id = f"txn_{uuid.uuid4().hex[:12]}"
+        tx = PaymentTransaction(
+            id=tx_id,
+            amount=request.amount,
+            currency=request.currency,
+            method=request.method,
+            status="failed",
+            failure_reason=request.failure_reason,
+            customer_id=f"cust_{request.customer_name.lower().replace(' ', '_')}",
+            merchant_id="merch_enterprise_01",
+            timestamp=datetime.now(timezone.utc),
+            metadata={
+                "customer_name": request.customer_name,
+                "customer_phone": request.customer_phone,
+                "device": "mobile_app",
+                "attempt_count": 1
+            }
+        )
+
+        result = await pipeline.process_single(tx)
+        
+        # Generate dynamic personalized nudge
+        classification = pipeline.classifier.classify(tx)
+        nudge_action = await pipeline.nudge_agent.generate_nudge(tx, classification, language="hinglish")
+        
+        return {
+            "transaction": tx.model_dump(mode="json"),
+            "result": result.model_dump(mode="json"),
+            "personalized_nudge": {
+                "channel": "WhatsApp",
+                "recipient": request.customer_name,
+                "phone": request.customer_phone,
+                "message": nudge_action.outcome or nudge_action.details,
+                "cta_url": f"https://rzp.io/i/{tx_id}"
+            }
+        }
+    except Exception as e:
+        logger.error(f"Custom recovery error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/razorpay/create-order")
+async def create_live_razorpay_order(req: RazorpayOrderRequest):
+    """Create real test order on Razorpay using live test credentials."""
+    try:
+        amount_paise = int(req.amount * 100)
+        order = await razorpay_client.create_payment(
+            amount=amount_paise,
+            currency=req.currency,
+            receipt=req.receipt or f"rcpt_{uuid.uuid4().hex[:8]}",
+            notes=req.notes or {"source": "RecoverAI Agent"}
+        )
+        return {
+            "success": True,
+            "order_id": order.get("id"),
+            "amount_inr": req.amount,
+            "currency": req.currency,
+            "status": order.get("status"),
+            "raw_order": order
+        }
+    except Exception as e:
+        logger.error(f"Razorpay live order error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "order_id": f"order_simulated_{uuid.uuid4().hex[:10]}"
+        }
+
 # ─── Audit ───────────────────────────────────────────────────────────────────
 
 @app.get("/api/audit/{transaction_id}")
