@@ -161,13 +161,32 @@ recoverai/
 
 ---
 
-## ⚡ Quick Start Guide
+## ⚡ Quick Start Guide (1-Click Launch)
 
-### Prerequisites
-- Python 3.10+
-- Node.js 18+
+### 🌟 Option 1: 1-Click Automated Launcher (Recommended)
+Anyone can clone and run RecoverAI with a single command — dependencies and servers are automatically configured:
 
-### 1. Clone & Setup Environment
+**On Windows (Double-click or run):**
+```cmd
+.\run.bat
+```
+
+**On Linux / macOS:**
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+**With Docker Compose:**
+```bash
+docker compose up --build
+```
+
+The application will launch and automatically open at **`http://localhost:3000`** (Backend at **`http://localhost:8000/docs`**).
+
+---
+
+### 🛠️ Option 2: Manual Step-by-Step Setup
 ```bash
 git clone https://github.com/your-username/recoverai.git
 cd recoverai
@@ -185,8 +204,8 @@ pip install -r requirements.txt
 ### 2. Configure Environment Variables
 Create a `.env` file in the root directory:
 ```env
-RAZORPAY_KEY_ID=rzp_test_hQwBOBdYSadukv
-RAZORPAY_KEY_SECRET=DRh9gPRP7g0OGBgUy0SiThfV
+RAZORPAY_KEY_ID=rzp_test_your_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 GEMINI_API_KEY=your_google_gemini_api_key
 OPENAI_API_KEY=your_openai_api_key_optional
 ```
