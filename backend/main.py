@@ -69,6 +69,7 @@ async def startup_event():
 # ─── Health ─────────────────────────────────────────────────────────────────
 
 @app.get("/")
+@app.get("/health")
 async def health_check():
     """Health check endpoint."""
     return {
