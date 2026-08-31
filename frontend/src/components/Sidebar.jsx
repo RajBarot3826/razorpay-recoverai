@@ -3,7 +3,7 @@ import { useState } from 'react'
 export default function Sidebar({ activeTab, setActiveTab }) {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: '🏠' },
-    { id: 'sandbox', label: 'AI Sandbox', icon: '🧪', badge: 'LIVE' },
+    { id: 'sandbox', label: 'Sandbox', icon: '🧪', badge: 'LIVE' },
     { id: 'transactions', label: 'Transactions', icon: '📑' },
     { id: 'pipeline', label: 'Recovery Pipeline', icon: '🔄' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
@@ -15,7 +15,6 @@ export default function Sidebar({ activeTab, setActiveTab }) {
 
   return (
     <aside className="sidebar">
-      {/* Brand Logo */}
       <div className="sidebar-logo">
         <div className="logo-icon-wrap">
           <div className="logo-sparkle">✦</div>
@@ -36,11 +35,10 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         </div>
         <div className="logo-text">
           <span className="brand-name">Recover<span className="brand-highlight">AI</span></span>
-          <span className="brand-subtitle">AI Payment Recovery Agent</span>
+          <span className="brand-subtitle">Payment Recovery Engine</span>
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="sidebar-nav">
         {navItems.map((item) => (
           <button
@@ -55,10 +53,9 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         ))}
       </nav>
 
-      {/* AI Engine Status Card with 3D Animated Bot */}
       <div className="sidebar-ai-card">
         <div className="ai-card-header">
-          <span className="ai-status-title">AI Engine Status</span>
+          <span className="ai-status-title">Engine Status</span>
           <span className="ai-active-indicator">
             <span className="pulse-dot"></span> Active
           </span>
@@ -66,7 +63,6 @@ export default function Sidebar({ activeTab, setActiveTab }) {
 
         <div className="ai-gauge-container">
           <svg className="gauge-svg" viewBox="0 0 100 100">
-            {/* Background Track */}
             <circle
               cx="50"
               cy="50"
@@ -75,7 +71,6 @@ export default function Sidebar({ activeTab, setActiveTab }) {
               stroke="#e2e8f0"
               strokeWidth="6"
             />
-            {/* Animated Gauge Arc */}
             <circle
               cx="50"
               cy="50"
@@ -97,7 +92,6 @@ export default function Sidebar({ activeTab, setActiveTab }) {
             </defs>
           </svg>
 
-          {/* 3D Cute Robot Icon in Center */}
           <div className="ai-bot-avatar">
             <div className="bot-head">
               <div className="bot-antenna"></div>
@@ -121,7 +115,6 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         </div>
       </div>
 
-      {/* User Profile */}
       <div className="sidebar-user-card">
         <div className="user-avatar-wrap">
           <div className="user-avatar-circle">

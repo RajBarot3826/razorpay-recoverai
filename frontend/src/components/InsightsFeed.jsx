@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 
 export default function InsightsFeed({ data, onViewAll }) {
   const staticInsights = [
@@ -45,7 +45,7 @@ export default function InsightsFeed({ data, onViewAll }) {
       title: 'Model Accuracy',
       desc: '98.6% ↑ 28.5% vs last 7 days',
     },
-  ];
+  ]
 
   const staticActivityFeed = [
     {
@@ -98,49 +98,49 @@ export default function InsightsFeed({ data, onViewAll }) {
       color: 'green',
       icon: '✓',
     },
-  ];
+  ]
 
-  let displayInsights = staticInsights;
-  let displayActivityFeed = staticActivityFeed;
+  let displayInsights = staticInsights
+  let displayActivityFeed = staticActivityFeed
 
   if (data && data.sample_results && data.metrics) {
-    const failureStats = {};
-    const actionStats = {};
+    const failureStats = {}
+    const actionStats = {}
     
     data.sample_results.forEach(r => {
       if (r.failure_reason) {
-        if (!failureStats[r.failure_reason]) failureStats[r.failure_reason] = { total: 0, recovered: 0 };
-        failureStats[r.failure_reason].total++;
-        if (r.recovery_status === 'RECOVERED') failureStats[r.failure_reason].recovered++;
+        if (!failureStats[r.failure_reason]) failureStats[r.failure_reason] = { total: 0, recovered: 0 }
+        failureStats[r.failure_reason].total++
+        if (r.recovery_status === 'RECOVERED') failureStats[r.failure_reason].recovered++
       }
   
       if (r.action_taken) {
-        if (!actionStats[r.action_taken]) actionStats[r.action_taken] = { total: 0, recovered: 0 };
-        actionStats[r.action_taken].total++;
-        if (r.recovery_status === 'RECOVERED') actionStats[r.action_taken].recovered++;
+        if (!actionStats[r.action_taken]) actionStats[r.action_taken] = { total: 0, recovered: 0 }
+        actionStats[r.action_taken].total++
+        if (r.recovery_status === 'RECOVERED') actionStats[r.action_taken].recovered++
       }
-    });
+    })
   
-    let bestFailure = { name: 'UPI TIMEOUT', rate: 91 };
-    let maxFailureTotal = 0;
+    let bestFailure = { name: 'UPI TIMEOUT', rate: 91 }
+    let maxFailureTotal = 0
     for (const [reason, stats] of Object.entries(failureStats)) {
       if (stats.total > 0) {
-        const rate = Math.round((stats.recovered / stats.total) * 100);
+        const rate = Math.round((stats.recovered / stats.total) * 100)
         if (rate > bestFailure.rate || (rate === bestFailure.rate && stats.total > maxFailureTotal)) {
-          bestFailure = { name: reason.replace(/_/g, ' '), rate };
-          maxFailureTotal = stats.total;
+          bestFailure = { name: reason.replace(/_/g, ' '), rate }
+          maxFailureTotal = stats.total
         }
       }
     }
   
-    let bestAction = { name: 'Smart Retry', rate: 87 };
-    let maxActionTotal = 0;
+    let bestAction = { name: 'Smart Retry', rate: 87 }
+    let maxActionTotal = 0
     for (const [action, stats] of Object.entries(actionStats)) {
       if (stats.total > 0) {
-        const rate = Math.round((stats.recovered / stats.total) * 100);
+        const rate = Math.round((stats.recovered / stats.total) * 100)
         if (rate > bestAction.rate || (rate === bestAction.rate && stats.total > maxActionTotal)) {
-          bestAction = { name: action.replace(/_/g, ' '), rate };
-          maxActionTotal = stats.total;
+          bestAction = { name: action.replace(/_/g, ' '), rate }
+          maxActionTotal = stats.total
         }
       }
     }
@@ -189,51 +189,51 @@ export default function InsightsFeed({ data, onViewAll }) {
         title: 'Model Accuracy',
         desc: '98.6% ↑ 28.5% vs last 7 days',
       },
-    ];
+    ]
   
     const sortedResults = [...data.sample_results].sort((a, b) => {
-      return new Date(b.timestamp) - new Date(a.timestamp);
-    }).slice(0, 5);
+      return new Date(b.timestamp) - new Date(a.timestamp)
+    }).slice(0, 5)
   
     const getRelativeTime = (timestamp) => {
-      const diff = Math.floor((new Date() - new Date(timestamp)) / 1000);
-      if (isNaN(diff)) return 'Just now';
-      if (diff < 60) return 'Just now';
-      if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
-      if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
-      return `${Math.floor(diff/86400)}d ago`;
-    };
+      const diff = Math.floor((new Date() - new Date(timestamp)) / 1000)
+      if (isNaN(diff)) return 'Just now'
+      if (diff < 60) return 'Just now'
+      if (diff < 3600) return `${Math.floor(diff/60)}m ago`
+      if (diff < 86400) return `${Math.floor(diff/3600)}h ago`
+      return `${Math.floor(diff/86400)}d ago`
+    }
   
     displayActivityFeed = sortedResults.map((r, i) => {
-      const isRecovered = r.recovery_status === 'RECOVERED';
-      const isFailed = r.recovery_status === 'FAILED';
-      const actionStr = r.action_taken || '';
-      const isNudge = actionStr === 'CUSTOMER_NUDGE';
-      const isAlternative = actionStr === 'ALTERNATIVE_METHOD';
+      const isRecovered = r.recovery_status === 'RECOVERED'
+      const isFailed = r.recovery_status === 'FAILED'
+      const actionStr = r.action_taken || ''
+      const isNudge = actionStr === 'CUSTOMER_NUDGE'
+      const isAlternative = actionStr === 'ALTERNATIVE_METHOD'
   
-      let color = 'green';
-      let icon = '✓';
-      let statusStr = 'succeeded';
+      let color = 'green'
+      let icon = '✓'
+      let statusStr = 'succeeded'
       
       if (isFailed) {
-        color = 'red';
-        icon = '✕';
-        statusStr = 'failed';
+        color = 'red'
+        icon = '✕'
+        statusStr = 'failed'
       } else if (isNudge && !isRecovered) {
-        color = 'blue';
-        icon = '✈';
-        statusStr = 'sent';
+        color = 'blue'
+        icon = '✈'
+        statusStr = 'sent'
       } else if (isAlternative && !isRecovered) {
-        color = 'purple';
-        icon = '🔀';
-        statusStr = 'tried';
+        color = 'purple'
+        icon = '🔀'
+        statusStr = 'tried'
       } else if (!isRecovered) {
-        color = 'blue';
-        icon = '○';
-        statusStr = 'pending';
+        color = 'blue'
+        icon = '○'
+        statusStr = 'pending'
       }
   
-      const shortTxId = r.transaction_id ? r.transaction_id.substring(0, 12) + '...' : `txn_${Math.random().toString(36).substr(2, 8)}`;
+      const shortTxId = r.transaction_id ? r.transaction_id.substring(0, 12) + '...' : `txn_${Math.random().toString(36).substr(2, 8)}`
   
       return {
         id: r.id || i,
@@ -244,13 +244,12 @@ export default function InsightsFeed({ data, onViewAll }) {
         time: getRelativeTime(r.timestamp),
         color,
         icon,
-      };
-    });
+      }
+    })
   }
 
   return (
     <div className="insights-feed-column">
-      {/* AI Insights Card */}
       <div className="section-card insights-card">
         <div className="card-header-clean">
           <h3 className="section-title">
@@ -279,11 +278,10 @@ export default function InsightsFeed({ data, onViewAll }) {
         </div>
       </div>
 
-      {/* Live Activity Feed Card */}
       <div className="section-card activity-feed-card">
         <div className="card-header-clean">
           <h3 className="section-title">
-            <span className="title-icon-sym">⚡</span> Live Activity Feed
+            <span className="title-icon-sym">⚡</span> Activity Feed
           </h3>
           <button 
             className="view-all-link"

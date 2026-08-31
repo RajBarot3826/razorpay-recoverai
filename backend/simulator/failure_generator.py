@@ -7,8 +7,6 @@ from backend.models.schemas import PaymentTransaction
 from backend.simulator.scenarios import SCENARIOS_REGISTRY
 
 class PaymentFailureSimulator:
-    """Synthetic payment failure generator."""
-
     def __init__(self):
         self.methods = ["card", "upi", "netbanking", "wallet"]
         self.devices = ["mobile_app", "mobile_web", "desktop"]
@@ -59,18 +57,15 @@ class PaymentFailureSimulator:
         }
 
     def _generate_amount(self) -> float:
-        """Generate realistic amounts (₹100-₹50,000 right-skewed)."""
         amount = random.lognormvariate(6.5, 1.2)
         return round(min(max(amount, 100.0), 50000.0), 2)
 
     def _generate_timestamp(self) -> datetime.datetime:
-        """Generate realistic timestamps (last 7 days)."""
         now = datetime.datetime.now(datetime.timezone.utc)
         days_ago = random.uniform(0, 7)
         return now - datetime.timedelta(days=days_ago)
 
     def _generate_metadata(self) -> Dict[str, Any]:
-        """Generate realistic metadata."""
         return {
             "device": random.choice(self.devices),
             "browser": random.choice(self.browsers),
@@ -94,7 +89,6 @@ class PaymentFailureSimulator:
         )
 
     def generate_batch(self, n: int) -> List[PaymentTransaction]:
-        """Generates n failed transactions."""
         transactions = []
         for _ in range(n):
             method = random.choices(
@@ -111,7 +105,6 @@ class PaymentFailureSimulator:
         return transactions
 
     def generate_with_recoverable_ratio(self, n: int, recoverable_pct: float = 0.65) -> List[PaymentTransaction]:
-        """Generates transactions targeting a specific recoverable ratio."""
         recoverable_reasons = set([s.failure_type for s in SCENARIOS_REGISTRY if s.is_recoverable])
         unrecoverable_reasons = set([s.failure_type for s in SCENARIOS_REGISTRY if not s.is_recoverable])
         
@@ -140,7 +133,5 @@ class PaymentFailureSimulator:
         return transactions
 
     def export_to_json(self, transactions: List[PaymentTransaction], filepath: str):
-        """Export generated transactions to JSON for training data."""
         with open(filepath, 'w') as f:
-            # Assuming model_dump is available (Pydantic v2)
             json.dump([t.model_dump(mode='json') for t in transactions], f, indent=2)

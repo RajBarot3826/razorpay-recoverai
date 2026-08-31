@@ -1,10 +1,3 @@
-"""
-ML Failure Classifier for RecoverAI.
-Uses a two-stage approach:
-1. Rule-based keyword matcher for instant classification (high accuracy)
-2. RandomForest classifier on transaction features for confidence scoring
-"""
-
 import os
 import datetime
 import logging
@@ -23,7 +16,6 @@ from backend.simulator.failure_generator import PaymentFailureSimulator
 
 logger = logging.getLogger(__name__)
 
-# Keyword-based classification rules (stage 1 - deterministic, high accuracy)
 FAILURE_KEYWORDS = {
     "INSUFFICIENT_FUNDS": ["insufficient", "low balance", "nsf", "not enough", "no funds"],
     "BANK_TIMEOUT": ["bank timeout", "bank server", "bank down", "bank_timeout", "acquiring bank"],
@@ -39,10 +31,7 @@ FAILURE_KEYWORDS = {
     "RISK_BLOCKED": ["risk", "fraud", "blocked", "suspicious", "risk_blocked"],
 }
 
-
 class FailureClassifier:
-    """ML Failure Classification with keyword + RandomForest hybrid approach."""
-
     def __init__(self, model_path: str = "failure_model.joblib", encoder_path: str = "encoders.joblib"):
         self.model = None
         self.model_path = model_path
@@ -58,171 +47,161 @@ class FailureClassifier:
                 pass
 
     def _keyword_classify(self, failure_reason: str) -> str:
-        """Stage 1: Deterministic keyword-based classification."""
-        reason_lower = (failure_reason or "").lower().replace("_", " ")
-
-        # Direct match (failure_reason IS the enum key, e.g. "INSUFFICIENT_FUNDS")
-        reason_upper = (failure_reason or "").upper().replace(" ", "_")
-        if reason_upper in FAILURE_KEYWORDS:
-            return reason_upper
-
-        # Keyword search
-        for failure_type, keywords in FAILURE_KEYWORDS.items():
+        if not failure_reason:
+            return "UNKNOWN"
+        reason_lower = failure_reason.lower()
+        for ftype, keywords in FAILURE_KEYWORDS.items():
             for kw in keywords:
+                if re.search(r'\b' + re.escape(kw) + r'\b', reason_lower):
+                    return ftype
                 if kw in reason_lower:
-                    return failure_type
-
+                    return ftype
         return "UNKNOWN"
 
-    def _extract_features(self, tx: PaymentTransaction) -> Dict[str, Any]:
-        """Extract ML features from PaymentTransaction."""
-        hour = tx.timestamp.hour if tx.timestamp else 12
-        day_of_week = tx.timestamp.weekday() if tx.timestamp else 0
+    def extract_features(self, tx: PaymentTransaction) -> Dict[str, Any]:
+        hour = tx.timestamp.hour if hasattr(tx.timestamp, "hour") else 12
+        day_of_week = tx.timestamp.weekday() if hasattr(tx.timestamp, "weekday") else 0
+        day_of_month = tx.timestamp.day if hasattr(tx.timestamp, "day") else 15
+        is_weekend = 1 if day_of_week >= 5 else 0
+        is_night = 1 if hour >= 22 or hour <= 6 else 0
+        is_salary_day = 1 if day_of_month in [1, 2, 3, 28, 29, 30, 31] else 0
 
-        if tx.amount < 500:
-            amount_bucket = "low"
-        elif tx.amount < 5000:
-            amount_bucket = "medium"
-        elif tx.amount < 20000:
-            amount_bucket = "high"
-        else:
-            amount_bucket = "very_high"
-
-        meta = tx.metadata or {}
+        metadata = tx.metadata or {}
+        attempt_count = metadata.get("attempt_count", 1)
+        device = metadata.get("device", "unknown")
+        failure_reason = tx.failure_reason or ""
+        reason_len = len(failure_reason)
 
         return {
-            "amount": tx.amount,
-            "amount_bucket": amount_bucket,
-            "method": tx.method or "unknown",
-            "hour_of_day": hour,
+            "amount": float(tx.amount),
+            "hour": hour,
             "day_of_week": day_of_week,
-            "attempt_count": meta.get("attempt_count", 1),
-            "device": meta.get("device", "unknown"),
-            "browser": meta.get("browser", "unknown"),
+            "day_of_month": day_of_month,
+            "is_weekend": is_weekend,
+            "is_night": is_night,
+            "is_salary_day": is_salary_day,
+            "attempt_count": attempt_count,
+            "reason_len": reason_len,
+            "method": tx.method,
+            "device": device,
         }
 
-    def _prepare_data(self, transactions: List[PaymentTransaction], is_training: bool = False) -> pd.DataFrame:
-        """Convert transactions into feature vectors."""
-        feature_dicts = [self._extract_features(tx) for tx in transactions]
-        df = pd.DataFrame(feature_dicts)
+    def classify(self, transaction: PaymentTransaction) -> FailureClassification:
+        kw_type = self._keyword_classify(transaction.failure_reason)
+        features = self.extract_features(transaction)
+        features_used = list(features.keys())
 
-        categorical_cols = ["amount_bucket", "method", "device", "browser"]
+        if self.model is None or not hasattr(self.target_encoder, "classes_"):
+            if kw_type != "UNKNOWN":
+                return FailureClassification(
+                    failure_type=kw_type,
+                    confidence_score=0.92,
+                    features_used=features_used,
+                    raw_reason=transaction.failure_reason,
+                )
+            return FailureClassification(
+                failure_type="BANK_TIMEOUT",
+                confidence_score=0.70,
+                features_used=features_used,
+                raw_reason=transaction.failure_reason,
+            )
 
-        if is_training:
-            self.label_encoders = {}
-            for col in categorical_cols:
-                le = LabelEncoder()
-                df[col] = le.fit_transform(df[col].astype(str))
-                self.label_encoders[col] = le
-        else:
-            for col in categorical_cols:
-                le = self.label_encoders.get(col)
-                if le:
-                    classes = list(le.classes_)
-                    df[col] = df[col].apply(lambda x: x if x in classes else classes[0])
-                    df[col] = le.transform(df[col].astype(str))
-                else:
-                    df[col] = 0
+        try:
+            df = pd.DataFrame([features])
+            for col in ["method", "device"]:
+                if col in self.label_encoders:
+                    df[col] = df[col].astype(str).map(
+                        lambda s: s if s in self.label_encoders[col].classes_ else self.label_encoders[col].classes_[0]
+                    )
+                    df[col] = self.label_encoders[col].transform(df[col])
 
-        numeric_cols = ["amount", "hour_of_day", "day_of_week", "attempt_count"]
-        if is_training:
-            df[numeric_cols] = self.scaler.fit_transform(df[numeric_cols])
-        else:
-            df[numeric_cols] = self.scaler.transform(df[numeric_cols])
+            proba = self.model.predict_proba(df)[0]
+            pred_idx = np.argmax(proba)
+            model_confidence = float(proba[pred_idx])
+            pred_class = self.target_encoder.inverse_transform([pred_idx])[0]
 
-        return df
+            if kw_type != "UNKNOWN":
+                final_type = kw_type
+                confidence = max(model_confidence, 0.88)
+            else:
+                final_type = pred_class
+                confidence = model_confidence
 
-    def train(self, transactions: List[PaymentTransaction]) -> Dict[str, Any]:
-        """Train the RandomForest on generated data."""
-        if not transactions:
-            raise ValueError("No transactions provided for training.")
+            return FailureClassification(
+                failure_type=final_type,
+                confidence_score=round(confidence, 2),
+                features_used=features_used,
+                raw_reason=transaction.failure_reason,
+            )
+        except Exception:
+            return FailureClassification(
+                failure_type=kw_type if kw_type != "UNKNOWN" else "BANK_TIMEOUT",
+                confidence_score=0.80,
+                features_used=features_used,
+                raw_reason=transaction.failure_reason,
+            )
 
-        X = self._prepare_data(transactions, is_training=True)
+    def self_train(self, n_samples: int = 500) -> Dict[str, Any]:
+        sim = PaymentFailureSimulator()
+        transactions = sim.generate_batch(n_samples)
 
-        # Use keyword classification as the ground truth (much more accurate)
-        y_raw = [self._keyword_classify(tx.failure_reason) for tx in transactions]
-        self.target_encoder.fit(y_raw)
-        y = self.target_encoder.transform(y_raw)
+        data = []
+        for t in transactions:
+            feats = self.extract_features(t)
+            feats["failure_type"] = t.failure_reason.split(":")[0] if ":" in (t.failure_reason or "") else "INSUFFICIENT_FUNDS"
+            for ftype, keywords in FAILURE_KEYWORDS.items():
+                if any(kw in (t.failure_reason or "").lower() for kw in keywords):
+                    feats["failure_type"] = ftype
+                    break
+            data.append(feats)
 
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        df = pd.DataFrame(data)
+        X = df.drop("failure_type", axis=1)
+        y = df["failure_type"]
 
-        self.model = RandomForestClassifier(n_estimators=100, random_state=42, class_weight="balanced")
+        self.label_encoders = {}
+        for col in ["method", "device"]:
+            le = LabelEncoder()
+            X[col] = le.fit_transform(X[col].astype(str))
+            self.label_encoders[col] = le
+
+        self.target_encoder = LabelEncoder()
+        y_encoded = self.target_encoder.fit_transform(y)
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+
+        self.model = RandomForestClassifier(n_estimators=100, max_depth=12, random_state=42)
         self.model.fit(X_train, y_train)
 
         y_pred = self.model.predict(X_test)
         acc = accuracy_score(y_test, y_pred)
-        precision, recall, f1, _ = precision_recall_fscore_support(y_test, y_pred, average="weighted", zero_division=0)
-
-        metrics = {"accuracy": acc, "precision": precision, "recall": recall, "f1": f1}
-        logger.info(f"Classifier trained: accuracy={acc:.3f}, f1={f1:.3f}")
 
         self.save_model()
-        return metrics
-
-    def classify(self, transaction: PaymentTransaction) -> FailureClassification:
-        """Classify a single transaction using hybrid approach."""
-        # Stage 1: keyword-based (always available, high accuracy)
-        keyword_result = self._keyword_classify(transaction.failure_reason)
-
-        # Stage 2: ML confidence score (if model trained)
-        confidence = 0.5
-        features = self._extract_features(transaction)
-
-        if self.model:
-            try:
-                X = self._prepare_data([transaction], is_training=False)
-                probabilities = self.model.predict_proba(X)
-                ml_prediction = self.target_encoder.inverse_transform(self.model.predict(X))[0]
-                confidence = float(np.max(probabilities[0]))
-
-                # If keyword match is strong, use it. Otherwise use ML.
-                if keyword_result == "UNKNOWN":
-                    keyword_result = ml_prediction
-            except Exception as e:
-                logger.warning(f"ML prediction failed, using keyword only: {e}")
-
-        return FailureClassification(
-            transaction_id=transaction.id,
-            failure_type=keyword_result,
-            confidence=confidence,
-            features=features,
-        )
-
-    def classify_batch(self, transactions: List[PaymentTransaction]) -> List[FailureClassification]:
-        """Classify a batch of transactions."""
-        return [self.classify(tx) for tx in transactions]
-
-    def get_feature_importance(self) -> Dict[str, float]:
-        """Return feature importances."""
-        if not self.model:
-            return {}
-
-        feature_names = ["amount", "amount_bucket", "method", "hour_of_day",
-                         "day_of_week", "attempt_count", "device", "browser"]
-        importances = self.model.feature_importances_
-        return dict(zip(feature_names, map(float, importances)))
+        return {"accuracy": acc, "classes": list(self.target_encoder.classes_)}
 
     def save_model(self):
-        """Save model and encoders."""
-        if self.model:
+        try:
             joblib.dump(self.model, self.model_path)
-            state = {
+            joblib.dump({
                 "label_encoders": self.label_encoders,
                 "target_encoder": self.target_encoder,
-                "scaler": self.scaler,
-            }
-            joblib.dump(state, self.encoder_path)
+            }, self.encoder_path)
+        except Exception as e:
+            logger.warning(f"Could not save classifier model: {e}")
 
     def load_model(self):
-        """Load model and encoders."""
         self.model = joblib.load(self.model_path)
-        state = joblib.load(self.encoder_path)
-        self.label_encoders = state["label_encoders"]
-        self.target_encoder = state["target_encoder"]
-        self.scaler = state["scaler"]
+        encoders = joblib.load(self.encoder_path)
+        self.label_encoders = encoders["label_encoders"]
+        self.target_encoder = encoders["target_encoder"]
 
-    def self_train(self, n_samples: int = 1000) -> Dict[str, Any]:
-        """Generate synthetic data and train."""
-        sim = PaymentFailureSimulator()
-        transactions = sim.generate_batch(n_samples)
-        return self.train(transactions)
+    def get_feature_importance(self) -> Dict[str, float]:
+        if self.model is None:
+            return {}
+        feature_names = [
+            "amount", "hour", "day_of_week", "day_of_month",
+            "is_weekend", "is_night", "is_salary_day",
+            "attempt_count", "reason_len", "method", "device"
+        ]
+        importances = self.model.feature_importances_
+        return {name: float(round(imp, 4)) for name, imp in zip(feature_names, importances)}

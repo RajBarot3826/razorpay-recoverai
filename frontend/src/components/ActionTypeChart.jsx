@@ -1,5 +1,4 @@
 export default function ActionTypeChart({ data }) {
-  // Compute distribution from data or use benchmark defaults
   let smartRetry = 87
   let altMethod = 12
   let escalation = 1
@@ -16,9 +15,8 @@ export default function ActionTypeChart({ data }) {
     escalation = Math.max(1, 100 - smartRetry - altMethod)
   }
 
-  // SVG Donut calculations (radius = 54, circumference ~ 339.29)
   const radius = 54
-  const circumference = 2 * Math.PI * radius // ~ 339.292
+  const circumference = 2 * Math.PI * radius
 
   const srStroke = (smartRetry / 100) * circumference
   const amStroke = (altMethod / 100) * circumference
@@ -37,7 +35,6 @@ export default function ActionTypeChart({ data }) {
       <div className="donut-chart-wrapper">
         <div className="donut-svg-container">
           <svg className="donut-svg" viewBox="0 0 140 140">
-            {/* Background Circle */}
             <circle
               cx="70"
               cy="70"
@@ -47,7 +44,6 @@ export default function ActionTypeChart({ data }) {
               strokeWidth="16"
             />
 
-            {/* Smart Retry (Blue) */}
             <circle
               cx="70"
               cy="70"
@@ -58,10 +54,8 @@ export default function ActionTypeChart({ data }) {
               strokeDasharray={`${srStroke} ${circumference}`}
               strokeDashoffset={srOffset}
               transform="rotate(-90 70 70)"
-              className="donut-segment"
             />
 
-            {/* Alternative Method (Green) */}
             <circle
               cx="70"
               cy="70"
@@ -72,49 +66,44 @@ export default function ActionTypeChart({ data }) {
               strokeDasharray={`${amStroke} ${circumference}`}
               strokeDashoffset={amOffset}
               transform="rotate(-90 70 70)"
-              className="donut-segment"
             />
 
-            {/* Escalation (Purple) */}
             <circle
               cx="70"
               cy="70"
               r={radius}
               fill="none"
-              stroke="#8b5cf6"
+              stroke="#f59e0b"
               strokeWidth="16"
               strokeDasharray={`${escStroke} ${circumference}`}
               strokeDashoffset={escOffset}
               transform="rotate(-90 70 70)"
-              className="donut-segment"
             />
           </svg>
 
-          {/* Floating Percent Callouts */}
-          <div className="donut-callout callout-esc">1%</div>
-          <div className="donut-callout callout-am">12%</div>
-          <div className="donut-callout callout-sr">87%</div>
-
-          {/* Donut Center Text */}
-          <div className="donut-center-info">
-            <div className="donut-count">{totalCount}</div>
-            <div className="donut-sublabel">TOTAL</div>
+          <div className="donut-center-text">
+            <span className="donut-center-total">{totalCount}</span>
+            <span className="donut-center-label">actions</span>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="donut-legend-list">
-          <div className="legend-row">
-            <span className="legend-box blue"></span>
-            <span className="legend-name">SMART RETRY ({smartRetry}%)</span>
+        <div className="donut-legend-column">
+          <div className="donut-legend-entry">
+            <span className="legend-marker bg-blue"></span>
+            <span className="legend-text-label">SMART RETRY</span>
+            <span className="legend-pct-val">{smartRetry}%</span>
           </div>
-          <div className="legend-row">
-            <span className="legend-box green"></span>
-            <span className="legend-name">ALTERNATIVE METHOD ({altMethod}%)</span>
+
+          <div className="donut-legend-entry">
+            <span className="legend-marker bg-green"></span>
+            <span className="legend-text-label">ALTERNATIVE METHOD</span>
+            <span className="legend-pct-val">{altMethod}%</span>
           </div>
-          <div className="legend-row">
-            <span className="legend-box purple"></span>
-            <span className="legend-name">ESCALATION ({escalation}%)</span>
+
+          <div className="donut-legend-entry">
+            <span className="legend-marker bg-gold"></span>
+            <span className="legend-text-label">ESCALATION</span>
+            <span className="legend-pct-val">{escalation}%</span>
           </div>
         </div>
       </div>

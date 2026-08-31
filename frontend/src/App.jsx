@@ -19,18 +19,14 @@ function App() {
   const [theme, setTheme] = useState('light')
   const [toastMessage, setToastMessage] = useState(null)
   
-  // Pipeline Step Simulator State
   const [pipelineStep, setPipelineStep] = useState(0)
   const [isSimulatingPipeline, setIsSimulatingPipeline] = useState(false)
   
-  // Search and Filter State for Transactions Tab
   const [txSearchQuery, setTxSearchQuery] = useState('')
   const [txStatusFilter, setTxStatusFilter] = useState('ALL')
   
-  // ROI Calculator State for Analytics Tab
-  const [merchantMonthlyVolume, setMerchantMonthlyVolume] = useState(10000000) // ₹1 Crore
+  const [merchantMonthlyVolume, setMerchantMonthlyVolume] = useState(10000000)
   
-  // AI Sandbox Playground State
   const [sandboxAmount, setSandboxAmount] = useState(2499)
   const [sandboxMethod, setSandboxMethod] = useState('upi')
   const [sandboxFailureReason, setSandboxFailureReason] = useState('UPI transaction timed out waiting for bank approval')
@@ -41,25 +37,23 @@ function App() {
   const [sandboxLoading, setSandboxLoading] = useState(false)
   const [sandboxResult, setSandboxResult] = useState(null)
   
-  // Live Razorpay Order & Checkout State
   const [rzpOrderLoading, setRzpOrderLoading] = useState(false)
   const [rzpOrderResult, setRzpOrderResult] = useState(null)
   const [webhookSimResult, setWebhookSimResult] = useState(null)
   const [webhookSimLoading, setWebhookSimLoading] = useState(false)
 
-  // Real Razorpay Standard Checkout Modal Trigger
   const openLiveRazorpayCheckout = (amt, name, phone) => {
     if (typeof window.Razorpay === 'undefined') {
-      showToast('⚠️ Razorpay Checkout SDK is loading, please try again in a moment.')
+      showToast('Razorpay Checkout SDK is loading, please try again in a moment.')
       return
     }
-    const chargeAmount = Math.round((Number(amt) || 2499) * 100) // paise
+    const chargeAmount = Math.round((Number(amt) || 2499) * 100)
     const options = {
       key: 'rzp_test_hQwBOBdYSadukv',
       amount: chargeAmount,
       currency: 'INR',
-      name: 'RecoverAI Merchant (Live)',
-      description: '1-Click Autonomous Revenue Recovery Checkout',
+      name: 'RecoverAI Merchant',
+      description: '1-Click Revenue Recovery Checkout',
       image: 'https://cdn.razorpay.com/static/assets/logo/rzp.png',
       prefill: {
         name: name || 'Aarav Sharma',
@@ -70,11 +64,11 @@ function App() {
         color: '#2563eb'
       },
       handler: function (response) {
-        showToast(`🎉 Payment Recovered! Razorpay ID: ${response.razorpay_payment_id}`)
+        showToast(`Payment Recovered! Razorpay ID: ${response.razorpay_payment_id}`)
       },
       modal: {
         ondismiss: function () {
-          showToast('ℹ️ Razorpay Checkout closed by user.')
+          showToast('Razorpay Checkout closed.')
         }
       }
     }
@@ -82,7 +76,6 @@ function App() {
     rzp.open()
   }
 
-  // Alerts State with dismiss functionality
   const [alertsList, setAlertsList] = useState([
     { id: 'alt-1', type: 'COMPLIANCE GUARDRAIL', severity: 'WARNING', message: 'Customer nudge blocked for txn_f229804a during quiet hours (21:00 - 08:00 IST)', time: '4 mins ago', status: 'UNRESOLVED' },
     { id: 'alt-2', type: 'RISK DETECTION', severity: 'CRITICAL', message: 'Risk-blocked transaction detected (txn_9c3d2e11). Smart retries automatically suppressed by RBI guardrail.', time: '12 mins ago', status: 'UNRESOLVED' },
@@ -90,7 +83,6 @@ function App() {
     { id: 'alt-4', type: 'UPI GATEWAY HEALTH', severity: 'INFO', message: 'HDFC UPI gateway latency normalised (94% recovery rate on current batch)', time: '45 mins ago', status: 'RESOLVED' }
   ])
 
-  // Settings State with live interactive toggles
   const [settingsState, setSettingsState] = useState({
     quietHoursEnabled: true,
     maxRetries: 3,
@@ -120,16 +112,14 @@ function App() {
       if (!res.ok) throw new Error(`API returned status ${res.status}`)
       const result = await res.json()
       setData(result)
-      showToast(`🚀 Successfully processed ${runCount} transactions! Recovered ${result?.results_summary?.recovered || 0} payments.`)
+      showToast(`Processed ${runCount} transactions. Recovered ${result?.results_summary?.recovered || 0} payments.`)
     } catch (err) {
-      console.warn('API error, demo continues smoothly with benchmark data:', err)
-      showToast('⚠️ Running in benchmark simulation mode.')
+      showToast('Running in benchmark simulation mode.')
     } finally {
       setLoading(false)
     }
   }
 
-  // Run Custom AI Sandbox Recovery
   const runCustomSandbox = async () => {
     setSandboxLoading(true)
     try {
@@ -150,16 +140,14 @@ function App() {
       if (!res.ok) throw new Error(`Status ${res.status}`)
       const resData = await res.json()
       setSandboxResult(resData)
-      showToast(`⚡ AI Agent completed diagnosis in ${sandboxLanguage.toUpperCase()}!`)
+      showToast(`Diagnosis completed for ${sandboxCustomerName}`)
     } catch (err) {
-      console.error('Sandbox error:', err)
-      showToast('⚠️ Sandbox response generated via offline fallback model.')
+      showToast('Response generated via offline fallback model.')
     } finally {
       setSandboxLoading(false)
     }
   }
 
-  // Simulate Razorpay Webhook Event
   const simulateRazorpayWebhook = async () => {
     setWebhookSimLoading(true)
     try {
@@ -177,15 +165,14 @@ function App() {
       })
       const data = await res.json()
       setWebhookSimResult(data)
-      showToast('⚡ Webhook Ingested & AI Agents executed in 14ms!')
+      showToast('Webhook processed in 14ms')
     } catch (err) {
-      showToast('⚠️ Webhook simulation processed.')
+      showToast('Webhook simulation processed.')
     } finally {
       setWebhookSimLoading(false)
     }
   }
 
-  // Create real test order on Razorpay
   const createLiveRazorpayOrder = async () => {
     setRzpOrderLoading(true)
     try {
@@ -201,25 +188,24 @@ function App() {
       const orderData = await res.json()
       setRzpOrderResult(orderData)
       if (orderData.success) {
-        showToast(`✅ Razorpay Live Test Order Created: ${orderData.order_id}`)
+        showToast(`Razorpay Test Order Created: ${orderData.order_id}`)
       } else {
-        showToast(`⚠️ Razorpay Simulated Order: ${orderData.order_id}`)
+        showToast(`Razorpay Simulated Order: ${orderData.order_id}`)
       }
     } catch (err) {
-      showToast('⚠️ Razorpay test order creation error.')
+      showToast('Razorpay test order error.')
     } finally {
       setRzpOrderLoading(false)
     }
   }
 
-  // Export Executive Audit Report (CSV)
   const exportAuditReportCSV = () => {
     const rows = [
       ['Transaction ID', 'Customer ID', 'Amount (INR)', 'Method', 'Failure Type', 'Root Cause', 'Recovery Status', 'Actions Taken']
     ]
     const sampleList = data?.sample_results || []
     if (sampleList.length === 0) {
-      showToast('⚠️ Please run the recovery pipeline first to generate data!')
+      showToast('Please run the recovery pipeline first to generate data.')
       return
     }
     sampleList.forEach(t => {
@@ -242,26 +228,25 @@ function App() {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    showToast('📥 Executive Audit Report (.CSV) downloaded!')
+    showToast('Audit Report (.CSV) downloaded.')
   }
 
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
-    showToast(`🎨 Switched to ${next === 'dark' ? 'Dark Cyber Fintech' : 'Clean Light'} theme`)
+    showToast(`Switched to ${next === 'dark' ? 'Dark' : 'Light'} theme`)
   }
 
   const dismissAlert = (id) => {
     setAlertsList(prev => prev.filter(a => a.id !== id))
-    showToast('✓ Alert dismissed successfully')
+    showToast('Alert dismissed')
   }
 
   const resolveAlert = (id) => {
     setAlertsList(prev => prev.map(a => a.id === id ? { ...a, status: 'RESOLVED' } : a))
-    showToast('✓ Alert marked as resolved')
+    showToast('Alert resolved')
   }
 
-  // Interactive Pipeline Walkthrough Simulator
   const startPipelineSimulation = () => {
     setIsSimulatingPipeline(true)
     setPipelineStep(1)
@@ -273,11 +258,10 @@ function App() {
     setTimeout(() => {
       setPipelineStep(6)
       setIsSimulatingPipeline(false)
-      showToast('✅ Full 6-Stage AI Pipeline Walkthrough Completed!')
+      showToast('Pipeline Walkthrough Completed')
     }, 6000)
   }
 
-  // Filtered transactions for Transactions tab
   const getFilteredTransactions = () => {
     const sampleList = data?.sample_results || []
     return sampleList.filter(tx => {
@@ -297,15 +281,10 @@ function App() {
     })
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // SUB-PAGES RENDERERS
-  // ═══════════════════════════════════════════════════════════════════
-
-  // 0. AI SANDBOX PLAYGROUND (Interactive Debugger & WhatsApp Nudge Preview)
   const renderSandboxPage = () => {
     const presetScenarios = [
       {
-        label: '⚡ UPI Timeout (GPay / PhonePe)',
+        label: 'UPI Timeout (GPay / PhonePe)',
         amount: 1499,
         method: 'upi',
         reason: 'UPI transaction timed out waiting for bank approval',
@@ -313,7 +292,7 @@ function App() {
         phone: '+91 98765 43210'
       },
       {
-        label: '💰 Insufficient Funds (Month-End)',
+        label: 'Insufficient Funds (Month-End)',
         amount: 3850,
         method: 'card',
         reason: 'The bank declined transaction due to non-sufficient funds (NSF)',
@@ -321,7 +300,7 @@ function App() {
         phone: '+91 98220 12345'
       },
       {
-        label: '💳 Expired Card / Invalid CVV',
+        label: 'Expired Card / Invalid CVV',
         amount: 899,
         method: 'card',
         reason: 'The debit card used has passed its expiry date',
@@ -329,7 +308,7 @@ function App() {
         phone: '+91 97110 56789'
       },
       {
-        label: '💎 VIP High-Ticket Purchase (Escalate)',
+        label: 'VIP High-Ticket Purchase',
         amount: 24500,
         method: 'netbanking',
         reason: 'Transaction exceeds standard gateway limit',
@@ -342,8 +321,8 @@ function App() {
       <div className="subpage-container">
         <div className="subpage-header">
           <div>
-            <h2 className="main-heading">AI Payment Recovery Sandbox & Live Agent Debugger</h2>
-            <div className="heading-subline">Test custom payment failures in real-time — watch ML classification, Gemini root cause diagnostics, and live WhatsApp nudges</div>
+            <h2 className="main-heading">Payment Recovery Sandbox</h2>
+            <div className="heading-subline">Test payment failures and observe ML classification, root cause diagnostics, and customer nudges</div>
           </div>
           <button 
             className="gradient-run-btn"
@@ -351,7 +330,7 @@ function App() {
             disabled={rzpOrderLoading}
           >
             <span className="btn-rocket-sym">💳</span>
-            <span className="btn-main-label">{rzpOrderLoading ? 'Creating Order...' : 'Create Live Razorpay Test Order'}</span>
+            <span className="btn-main-label">{rzpOrderLoading ? 'Creating Order...' : 'Create Razorpay Test Order'}</span>
           </button>
         </div>
 
@@ -359,7 +338,7 @@ function App() {
           <div className="section-card" style={{ padding: '16px 20px', borderLeft: '4px solid #10b981', background: 'var(--bg-page)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <div>
-                <span className="status-badge-pill success">● Razorpay Live API Connected</span>
+                <span className="status-badge-pill success">Razorpay API Connected</span>
                 <span style={{ marginLeft: '10px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--color-blue)' }}>
                   Order ID: {rzpOrderResult.order_id}
                 </span>
@@ -367,14 +346,13 @@ function App() {
                   Amount: ₹{rzpOrderResult.amount_inr} {rzpOrderResult.currency}
                 </span>
               </div>
-              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>✓ Authenticated via Razorpay Test Secret</span>
+              <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>Authenticated via Test Secret</span>
             </div>
           </div>
         )}
 
-        {/* Quick Scenario Preset Chips */}
         <div className="sandbox-presets-row">
-          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>Quick Scenarios:</span>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)' }}>Presets:</span>
           {presetScenarios.map((sc, idx) => (
             <button
               key={idx}
@@ -385,7 +363,7 @@ function App() {
                 setSandboxFailureReason(sc.reason)
                 setSandboxCustomerName(sc.name)
                 setSandboxCustomerPhone(sc.phone)
-                showToast(`Loaded scenario: ${sc.label}`)
+                showToast(`Loaded: ${sc.label}`)
               }}
             >
               {sc.label}
@@ -393,17 +371,15 @@ function App() {
           ))}
         </div>
 
-        {/* 2-Column Sandbox Layout: Left Input Form | Right Live WhatsApp & Diagnostics */}
         <div className="sandbox-split-grid">
-          {/* Left Form: Custom Parameters */}
           <div className="section-card sandbox-input-card">
             <div className="card-header-clean">
-              <h3 className="section-title">🧪 Custom Failed Payment Input</h3>
+              <h3 className="section-title">Failed Payment Input</h3>
               <span className="online-agent-pill"><span className="live-pulse-dot"></span> Ready</span>
             </div>
 
             <div className="sandbox-form-group">
-              <label className="sandbox-field-label">Transaction Amount (INR)</label>
+              <label className="sandbox-field-label">Amount (INR)</label>
               <div className="sandbox-input-currency-wrap">
                 <span className="currency-symbol">₹</span>
                 <input 
@@ -431,7 +407,7 @@ function App() {
             </div>
 
             <div className="sandbox-form-group">
-              <label className="sandbox-field-label">Payment Gateway Error Message</label>
+              <label className="sandbox-field-label">Error Message</label>
               <textarea 
                 className="sandbox-textarea-field"
                 rows="3"
@@ -441,15 +417,14 @@ function App() {
               />
             </div>
 
-            {/* Channel & Language Controls */}
             <div className="sandbox-form-row">
               <div className="sandbox-form-group" style={{ flex: 1 }}>
                 <label className="sandbox-field-label">Recovery Channel</label>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
-                    { id: 'whatsapp', label: '💬 WhatsApp' },
-                    { id: 'sms', label: '📱 SMS' },
-                    { id: 'email', label: '📧 Email' },
+                    { id: 'whatsapp', label: 'WhatsApp' },
+                    { id: 'sms', label: 'SMS' },
+                    { id: 'email', label: 'Email' },
                   ].map(ch => (
                     <button
                       key={ch.id}
@@ -465,12 +440,12 @@ function App() {
               </div>
 
               <div className="sandbox-form-group" style={{ flex: 1 }}>
-                <label className="sandbox-field-label">Agent Language</label>
+                <label className="sandbox-field-label">Language</label>
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {[
-                    { id: 'hinglish', label: '🇮🇳 Hinglish' },
-                    { id: 'english', label: '🇬🇧 English' },
-                    { id: 'hindi', label: '🕉️ Hindi' },
+                    { id: 'hinglish', label: 'Hinglish' },
+                    { id: 'english', label: 'English' },
+                    { id: 'hindi', label: 'Hindi' },
                   ].map(lg => (
                     <button
                       key={lg.id}
@@ -514,8 +489,8 @@ function App() {
                 onClick={runCustomSandbox}
                 disabled={sandboxLoading}
               >
-                <span className="btn-rocket-sym">{sandboxLoading ? '⏳' : '⚡'}</span>
-                <span className="btn-main-label">{sandboxLoading ? 'Running AI Agents...' : 'Execute AI Recovery Agents'}</span>
+                <span className="btn-rocket-sym">{sandboxLoading ? '...' : '⚡'}</span>
+                <span className="btn-main-label">{sandboxLoading ? 'Processing...' : 'Run Diagnostics'}</span>
               </button>
 
               <button 
@@ -524,24 +499,22 @@ function App() {
                 style={{ padding: '0 16px', background: 'linear-gradient(135deg, #2563eb, #1d4ed8)', color: '#ffffff', border: 'none' }}
                 onClick={() => openLiveRazorpayCheckout(sandboxAmount, sandboxCustomerName, sandboxCustomerPhone)}
               >
-                💳 Open Razorpay Checkout
+                Razorpay Checkout
               </button>
             </div>
           </div>
 
-          {/* Right Column: Live Decision Flow & WhatsApp Mockup */}
           <div className="sandbox-results-column">
             {sandboxResult ? (
               <div className="section-card sandbox-output-card">
                 <div className="card-header-clean">
-                  <h3 className="section-title">🔍 Live AI Agent Decisioning</h3>
-                  <span className="status-badge-pill success">✓ Pipeline Completed</span>
+                  <h3 className="section-title">Diagnostic Decisioning</h3>
+                  <span className="status-badge-pill success">Complete</span>
                 </div>
 
-                {/* Agent Steps Timeline */}
                 <div className="sandbox-steps-timeline">
                   <div className="sandbox-step-item">
-                    <span className="step-badge">1. ML CLASSIFIER (98.6% ACCURACY)</span>
+                    <span className="step-badge">1. CLASSIFIER</span>
                     <div className="step-content">
                       <span className="tx-failure-pill">{sandboxResult.result?.failure_type || 'CLASSIFIED'}</span>
                       <span className="step-metric">Confidence: <strong>{((sandboxResult.result?.confidence_score || 0.88) * 100).toFixed(0)}%</strong></span>
@@ -549,7 +522,7 @@ function App() {
                   </div>
 
                   <div className="sandbox-step-item">
-                    <span className="step-badge">2. GOOGLE GEMINI 2.5 FLASH ROOT CAUSE</span>
+                    <span className="step-badge">2. ROOT CAUSE</span>
                     <div className="step-content">
                       <p className="root-cause-explanation">{sandboxResult.result?.root_cause}</p>
                     </div>
@@ -561,7 +534,7 @@ function App() {
                       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                         {(sandboxResult.result?.actions_taken || []).map((a, i) => (
                           <span key={i} className="status-badge-pill success">
-                            ⚡ {a.action_type} ({a.status})
+                            {a.action_type} ({a.status})
                           </span>
                         ))}
                       </div>
@@ -569,19 +542,18 @@ function App() {
                   </div>
 
                   <div className="sandbox-step-item">
-                    <span className="step-badge">4. RBI COMPLIANCE & QUIET HOURS</span>
+                    <span className="step-badge">4. COMPLIANCE</span>
                     <div className="step-content">
-                      <span className="status-badge-pill success">● Passed (Outside Quiet Hours 21:00-08:00 IST)</span>
+                      <span className="status-badge-pill success">Passed (Quiet Hours Verified)</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Simulated Smartphone WhatsApp / SMS Nudge Mockup */}
                 <div className="phone-mockup-wrapper">
                   <div className="phone-header-bar">
                     <div className="phone-avatar">{sandboxChannel === 'whatsapp' ? '💬' : sandboxChannel === 'sms' ? '📱' : '📧'}</div>
                     <div className="phone-contact-info">
-                      <div className="phone-contact-name">RecoverAI Payments (Verified)</div>
+                      <div className="phone-contact-name">RecoverAI Payments</div>
                       <div className="phone-contact-status">{sandboxChannel.toUpperCase()} • {sandboxLanguage.toUpperCase()}</div>
                     </div>
                   </div>
@@ -597,18 +569,18 @@ function App() {
                       className="bubble-cta-btn"
                       style={{ border: 'none', cursor: 'pointer', width: '100%' }}
                     >
-                      💳 Complete Payment with Razorpay (₹{sandboxAmount}) ›
+                      Complete Payment (₹{sandboxAmount}) ›
                     </button>
-                    <span className="bubble-time">Just now ✓✓</span>
+                    <span className="bubble-time">Just now</span>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="section-card sandbox-placeholder-card">
-                <div className="placeholder-icon">🤖</div>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-dark)' }}>Live Sandbox Awaiting Input</h3>
+                <div className="placeholder-icon">⚙️</div>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-dark)' }}>Sandbox Awaiting Input</h3>
                 <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', textAlign: 'center', maxWidth: '320px', lineHeight: 1.4 }}>
-                  Select a preset scenario on top or configure custom failure parameters on the left, then click <strong>"Execute AI Recovery Agents"</strong>.
+                  Select a preset scenario on top or configure parameters on the left, then click <strong>"Run Diagnostics"</strong>.
                 </p>
               </div>
             )}
@@ -618,7 +590,6 @@ function App() {
     )
   }
 
-  // 1. RECOVERY PIPELINE SCREEN
   const renderPipelinePage = () => {
     const stages = [
       {
@@ -633,8 +604,8 @@ function App() {
       {
         num: '02',
         name: 'ML Failure Classifier',
-        agent: 'Hybrid Random Forest + Keyword Engine',
-        desc: 'Classifies failure into 12 deterministic categories (UPI Timeout, NSF, Network Error, PIN, Risk) with 98.6% accuracy.',
+        agent: 'Hybrid Random Forest Engine',
+        desc: 'Classifies failure into 12 deterministic categories with 98.6% precision.',
         status: 'Operational',
         latency: '14ms',
         icon: '🧠'
@@ -642,8 +613,8 @@ function App() {
       {
         num: '03',
         name: 'Root Cause Diagnostic',
-        agent: 'Google Gemini 2.5 Flash / GPT-4o-mini',
-        desc: 'LLM performs natural-language diagnostic taking into account Indian banking hours, salary days, and gateway outages.',
+        agent: 'Gemini / GPT Diagnostic Core',
+        desc: 'LLM performs natural-language diagnostic evaluating banking hours and gateway latency.',
         status: 'Operational',
         latency: '340ms',
         icon: '🔍'
@@ -651,8 +622,8 @@ function App() {
       {
         num: '04',
         name: 'Strategy Engine',
-        agent: 'Multi-Agent Decision Core',
-        desc: 'Chooses sequential actions: Smart Retry, Customer WhatsApp Nudge, Alternative Payment Link, or Human VIP Escalation.',
+        agent: 'Decision Core',
+        desc: 'Selects sequential actions: Smart Retry, Customer WhatsApp Nudge, Alternative Payment Link, or Human Escalation.',
         status: 'Operational',
         latency: '12ms',
         icon: '⚡'
@@ -660,8 +631,8 @@ function App() {
       {
         num: '05',
         name: 'Compliance Guardrails',
-        agent: 'RBI & Quiet-Hours Enforcer',
-        desc: 'Blocks nudges during quiet hours (21:00 - 08:00 IST), suppresses retries on risk flags, and caps maximum retries at 3.',
+        agent: 'RBI & Policy Enforcer',
+        desc: 'Blocks nudges during quiet hours (21:00 - 08:00 IST), suppresses retries on risk flags, and caps retries at 3.',
         status: 'Enforced',
         latency: '4ms',
         icon: '🛡️'
@@ -670,7 +641,7 @@ function App() {
         num: '06',
         name: 'Audit Logger & Dispatch',
         agent: 'Immutable Decision Ledger',
-        desc: 'Logs every single decision node with timestamp, agent name, and reasoning before executing recovery dispatch.',
+        desc: 'Logs every decision node with timestamp, agent name, and reasoning before executing recovery dispatch.',
         status: 'Operational',
         latency: '6ms',
         icon: '📑'
@@ -681,20 +652,19 @@ function App() {
       <div className="subpage-container">
         <div className="subpage-header">
           <div>
-            <h2 className="main-heading">Multi-Agent Recovery Pipeline Architecture</h2>
-            <div className="heading-subline">Autonomous 6-Stage Pipeline Powered by Google Gemini & Razorpay</div>
+            <h2 className="main-heading">Recovery Pipeline Architecture</h2>
+            <div className="heading-subline">Autonomous 6-Stage Pipeline Powered by Razorpay & Machine Learning</div>
           </div>
           <button 
             className="gradient-run-btn"
             onClick={startPipelineSimulation}
             disabled={isSimulatingPipeline}
           >
-            <span className="btn-rocket-sym">{isSimulatingPipeline ? '⏳' : '▶'}</span>
-            <span className="btn-main-label">{isSimulatingPipeline ? 'Simulating Pipeline Flow...' : 'Simulate Live Pipeline Flow'}</span>
+            <span className="btn-rocket-sym">{isSimulatingPipeline ? '...' : '▶'}</span>
+            <span className="btn-main-label">{isSimulatingPipeline ? 'Simulating...' : 'Simulate Pipeline Flow'}</span>
           </button>
         </div>
 
-        {/* Pipeline Stage Cards Flow */}
         <div className="pipeline-flow-grid">
           {stages.map((st, i) => {
             const isActive = pipelineStep === (i + 1)
@@ -706,7 +676,7 @@ function App() {
               >
                 <div className="stage-top-bar">
                   <span className="stage-badge-num">STAGE {st.num}</span>
-                  <span className="stage-health-tag">● {st.status}</span>
+                  <span className="stage-health-tag">{st.status}</span>
                 </div>
                 <div className="stage-icon-hero">{st.icon}</div>
                 <h3 className="stage-title">{st.name}</h3>
@@ -721,31 +691,30 @@ function App() {
           })}
         </div>
 
-        {/* Live Pipeline Telemetry Monitor */}
         <div className="section-card pipeline-telemetry-card">
           <div className="card-header-clean">
-            <h3 className="section-title">⚡ Live Engine Telemetry & Health</h3>
-            <span className="online-agent-pill"><span className="live-pulse-dot"></span> All Agents Synchronized</span>
+            <h3 className="section-title">Engine Telemetry & Health</h3>
+            <span className="online-agent-pill"><span className="live-pulse-dot"></span> Online</span>
           </div>
           <div className="telemetry-grid">
             <div className="telemetry-stat">
-              <div className="telemetry-label">CURRENT MODEL</div>
-              <div className="telemetry-val blue">Google Gemini 2.5 Flash</div>
-              <div className="telemetry-sub">Live via REST API (Multi-model ready)</div>
+              <div className="telemetry-label">MODEL ENGINE</div>
+              <div className="telemetry-val blue">Gemini 2.5 Flash</div>
+              <div className="telemetry-sub">REST API Integration</div>
             </div>
             <div className="telemetry-stat">
               <div className="telemetry-label">AVERAGE PIPELINE LATENCY</div>
               <div className="telemetry-val green">384 ms</div>
-              <div className="telemetry-sub">Sub-second recovery decisioning</div>
+              <div className="telemetry-sub">Decisioning runtime</div>
             </div>
             <div className="telemetry-stat">
-              <div className="telemetry-label">RBI COMPLIANCE STATUS</div>
-              <div className="telemetry-val purple">100% Compliant</div>
+              <div className="telemetry-label">COMPLIANCE STATUS</div>
+              <div className="telemetry-val purple">Compliant</div>
               <div className="telemetry-sub">Quiet hours active (21:00 - 08:00)</div>
             </div>
             <div className="telemetry-stat">
               <div className="telemetry-label">RAZORPAY TEST API</div>
-              <div className="telemetry-val green">Authenticated</div>
+              <div className="telemetry-val green">Connected</div>
               <div className="telemetry-sub">Key ID: rzp_test_hQwBOBdYSadukv</div>
             </div>
           </div>
@@ -754,7 +723,6 @@ function App() {
     )
   }
 
-  // 2. TRANSACTIONS SCREEN (Full width with search & filters & export)
   const renderTransactionsPage = () => {
     const filtered = getFilteredTransactions()
     return (
@@ -762,30 +730,29 @@ function App() {
         <div className="subpage-header">
           <div>
             <h2 className="main-heading">Transaction Recovery Ledger</h2>
-            <div className="heading-subline">Inspect real-time failure reasons, ML classifications, and node-by-node audit trails</div>
+            <div className="heading-subline">Inspect failure reasons, classifications, and node-by-node audit trails</div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button className="table-action-btn" onClick={() => window.print()}>
-              🖨️ Print Report
+              Print Report
             </button>
             <button className="table-action-btn" onClick={exportAuditReportCSV}>
-              📥 Export CSV
+              Export CSV
             </button>
             <button className="gradient-run-btn" onClick={() => runRecovery(count)}>
               <span className="btn-rocket-sym">🚀</span>
-              <span className="btn-main-label">Process New Batch</span>
+              <span className="btn-main-label">Process Batch</span>
             </button>
           </div>
         </div>
 
-        {/* Search & Filter Toolbar */}
         <div className="section-card filter-toolbar-card">
           <div className="search-input-wrap">
             <span className="search-icon">🔍</span>
             <input 
               type="text" 
               className="tx-search-input" 
-              placeholder="Search by Transaction ID, Failure Reason, or Root Cause..."
+              placeholder="Search by ID, Failure Reason, or Root Cause..."
               value={txSearchQuery}
               onChange={(e) => setTxSearchQuery(e.target.value)}
             />
@@ -798,10 +765,10 @@ function App() {
             <span className="filter-label">Filter:</span>
             {[
               { id: 'ALL', label: 'All Transactions' },
-              { id: 'RECOVERED', label: '✓ Recovered Only' },
-              { id: 'FAILED', label: '✕ Unrecoverable' },
-              { id: 'UPI', label: '⚡ UPI Failures' },
-              { id: 'CARD', label: '💳 Card Failures' }
+              { id: 'RECOVERED', label: 'Recovered' },
+              { id: 'FAILED', label: 'Unrecoverable' },
+              { id: 'UPI', label: 'UPI' },
+              { id: 'CARD', label: 'Card' }
             ].map(f => (
               <button 
                 key={f.id}
@@ -814,15 +781,13 @@ function App() {
           </div>
         </div>
 
-        {/* Master Transaction Table */}
         <TransactionTable results={filtered.length > 0 || txSearchQuery || txStatusFilter !== 'ALL' ? filtered : data?.sample_results} />
       </div>
     )
   }
 
-  // 3. ANALYTICS & ROI CALCULATOR SCREEN
   const renderAnalyticsPage = () => {
-    const monthlyFailureRate = 0.12 // 12% industry average failure rate
+    const monthlyFailureRate = 0.12
     const volumeAtRisk = merchantMonthlyVolume * monthlyFailureRate
     const baselineRecovered = volumeAtRisk * 0.15
     const aiRecovered = volumeAtRisk * 0.52
@@ -833,12 +798,11 @@ function App() {
       <div className="subpage-container">
         <div className="subpage-header">
           <div>
-            <h2 className="main-heading">Recovery Intelligence & Business ROI</h2>
-            <div className="heading-subline">Deep insights into failure clusters, action conversion, and merchant financial impact</div>
+            <h2 className="main-heading">Recovery Intelligence & ROI</h2>
+            <div className="heading-subline">Failure clusters, action conversion, and financial recovery models</div>
           </div>
         </div>
 
-        {/* Middle Charts 3-Column Layout */}
         <div className="analytics-full-charts-grid">
           <div className="analytics-full-width-item">
             <BeforeAfterComparison comparison={data?.before_after} />
@@ -847,11 +811,10 @@ function App() {
           <ActionTypeChart data={data?.metrics?.by_action_type} />
         </div>
 
-        {/* Merchant ROI Financial Impact Calculator */}
         <div className="section-card roi-calculator-card">
           <div className="card-header-clean">
-            <h3 className="section-title">💰 Live Merchant Revenue Recovery ROI Calculator</h3>
-            <span className="track-badge-pill">Razorpay Enterprise Model</span>
+            <h3 className="section-title">Revenue Recovery ROI Model</h3>
+            <span className="track-badge-pill">Enterprise Analytics</span>
           </div>
 
           <div className="roi-calculator-layout">
@@ -899,7 +862,7 @@ function App() {
                 <span className="roi-metric-val green">₹{(aiRecovered / 100000).toFixed(2)} Lakhs</span>
               </div>
               <div className="roi-metric-item highlight">
-                <span className="roi-metric-label">Net Annual Revenue Lift Generated</span>
+                <span className="roi-metric-label">Net Annual Revenue Lift</span>
                 <span className="roi-metric-val purple">₹{(annualLift / 100000).toFixed(2)} Lakhs / year</span>
               </div>
             </div>
@@ -909,10 +872,9 @@ function App() {
     )
   }
 
-  // 4. CUSTOMERS PROFILE SCREEN
   const renderCustomersPage = () => {
     const rawCustomers = [
-      { cid: 'cust_ind_9921a', name: 'Aarav Sharma', email: 'aarav.s@gmail.com', method: 'UPI (GPay)', txCount: 8, recoveredCount: 7, totalSaved: 16420, health: 'VIP High Value', status: 'GREEN' },
+      { cid: 'cust_ind_9921a', name: 'Aarav Sharma', email: 'aarav.s@gmail.com', method: 'UPI (GPay)', txCount: 8, recoveredCount: 7, totalSaved: 16420, health: 'High Value', status: 'GREEN' },
       { cid: 'cust_ind_8471b', name: 'Priya Patel', email: 'priya.p@outlook.com', method: 'HDFC Card', txCount: 5, recoveredCount: 4, totalSaved: 9850, health: 'Reliable', status: 'GREEN' },
       { cid: 'cust_ind_3319c', name: 'Rohan Mehta', email: 'rohan.m@gmail.com', method: 'UPI (PhonePe)', txCount: 12, recoveredCount: 6, totalSaved: 14200, health: 'NSF Sensitive', status: 'YELLOW' },
       { cid: 'cust_ind_7720d', name: 'Sneha Reddy', email: 'sneha.r@gmail.com', method: 'ICICI NetBanking', txCount: 3, recoveredCount: 3, totalSaved: 8300, health: 'VIP', status: 'GREEN' },
@@ -924,7 +886,7 @@ function App() {
         <div className="subpage-header">
           <div>
             <h2 className="main-heading">Customer Recovery Profiles</h2>
-            <div className="heading-subline">Customer payment health, channel responsiveness, and personalized retry preferences</div>
+            <div className="heading-subline">Customer payment health and retry channel preferences</div>
           </div>
         </div>
 
@@ -937,11 +899,11 @@ function App() {
               <thead>
                 <tr>
                   <th>CUSTOMER</th>
-                  <th>PREFERRED METHOD</th>
-                  <th>FAILED ATTEMPTS</th>
+                  <th>METHOD</th>
+                  <th>ATTEMPTS</th>
                   <th>RECOVERED</th>
                   <th>TOTAL SAVED</th>
-                  <th>HEALTH SCORE</th>
+                  <th>STATUS</th>
                   <th>ACTION</th>
                 </tr>
               </thead>
@@ -964,7 +926,7 @@ function App() {
                       </td>
                       <td>
                         <span className="status-badge-pill success">
-                          <span className="status-sym">✓</span> {c.recoveredCount} ({rate}%)
+                          ✓ {c.recoveredCount} ({rate}%)
                         </span>
                       </td>
                       <td>
@@ -972,15 +934,15 @@ function App() {
                       </td>
                       <td>
                         <span className={`status-badge-pill ${c.status === 'GREEN' ? 'success' : c.status === 'YELLOW' ? 'warning' : 'failed'}`}>
-                          ● {c.health}
+                          {c.health}
                         </span>
                       </td>
                       <td>
                         <button 
                           className="table-action-btn"
-                          onClick={() => showToast(`📲 Personalized WhatsApp Recovery Nudge dispatched to ${c.name}!`)}
+                          onClick={() => showToast(`WhatsApp Recovery Nudge dispatched to ${c.name}`)}
                         >
-                          ⚡ Nudge Customer
+                          Nudge
                         </button>
                       </td>
                     </tr>
@@ -994,13 +956,12 @@ function App() {
     )
   }
 
-  // 5. INSIGHTS HUB SCREEN
   const renderInsightsPage = () => (
     <div className="subpage-container">
       <div className="subpage-header">
         <div>
-          <h2 className="main-heading">AI Recovery Intelligence & Live Activity Hub</h2>
-          <div className="heading-subline">Real-time payment failure analysis, channel effectiveness, and live agent events</div>
+          <h2 className="main-heading">Recovery Intelligence Hub</h2>
+          <div className="heading-subline">Payment failure patterns and live recovery events</div>
         </div>
       </div>
       <div className="insights-full-page-layout">
@@ -1009,29 +970,28 @@ function App() {
     </div>
   )
 
-  // 6. ALERTS & NOTIFICATIONS SCREEN
   const renderAlertsPage = () => (
     <div className="subpage-container">
       <div className="subpage-header">
         <div>
-          <h2 className="main-heading">System Alerts & Compliance Watch</h2>
-          <div className="heading-subline">Real-time compliance alerts, quiet-hour enforcements, and risk escalations</div>
+          <h2 className="main-heading">System Alerts & Compliance</h2>
+          <div className="heading-subline">Compliance events and risk policy monitoring</div>
         </div>
         <button 
           className="header-tool-btn" 
           style={{ width: 'auto', padding: '0 16px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 600 }}
           onClick={() => {
             setAlertsList([])
-            showToast('✓ All alerts cleared')
+            showToast('All alerts cleared')
           }}
         >
-          Clear All Alerts
+          Clear All
         </button>
       </div>
 
       <div className="section-card transaction-table-card">
         <div className="card-header-clean">
-          <h3 className="section-title">Active Alert Stream ({alertsList.length} items)</h3>
+          <h3 className="section-title">Active Alert Stream ({alertsList.length})</h3>
         </div>
         <div className="table-responsive-wrapper">
           <table className="custom-tx-table">
@@ -1039,7 +999,7 @@ function App() {
               <tr>
                 <th>SEVERITY</th>
                 <th>ALERT TYPE</th>
-                <th>MESSAGE & CONTEXT</th>
+                <th>MESSAGE</th>
                 <th>TIME</th>
                 <th>STATUS</th>
                 <th>ACTIONS</th>
@@ -1050,7 +1010,7 @@ function App() {
                 <tr key={alt.id} className="tx-row-item">
                   <td>
                     <span className={`status-badge-pill ${alt.severity === 'CRITICAL' ? 'failed' : alt.severity === 'WARNING' ? 'warning' : 'success'}`}>
-                      ● {alt.severity}
+                      {alt.severity}
                     </span>
                   </td>
                   <td>
@@ -1074,14 +1034,14 @@ function App() {
                           className="table-action-btn"
                           onClick={() => resolveAlert(alt.id)}
                         >
-                          ✓ Resolve
+                          Resolve
                         </button>
                       )}
                       <button 
                         className="table-action-btn secondary"
                         onClick={() => dismissAlert(alt.id)}
                       >
-                        ✕ Dismiss
+                        Dismiss
                       </button>
                     </div>
                   </td>
@@ -1089,7 +1049,7 @@ function App() {
               )) : (
                 <tr>
                   <td colSpan="6" style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
-                    🎉 No active alerts! All systems and compliance rules operating smoothly.
+                    No active alerts. All systems operating within normal parameters.
                   </td>
                 </tr>
               )}
@@ -1100,17 +1060,16 @@ function App() {
     </div>
   )
 
-  // 7. SETTINGS & CONFIGURATION SCREEN
   const renderSettingsPage = () => (
     <div className="subpage-container">
       <div className="subpage-header">
         <div>
-          <h2 className="main-heading">System Configuration & API Connections</h2>
-          <div className="heading-subline">Manage API keys, RBI compliance policies, and autonomous recovery rules</div>
+          <h2 className="main-heading">Configuration & Connections</h2>
+          <div className="heading-subline">Manage API keys, compliance policies, and recovery limits</div>
         </div>
         <button 
           className="gradient-run-btn"
-          onClick={() => showToast('✓ Configuration saved and synced with backend!')}
+          onClick={() => showToast('Configuration saved.')}
         >
           <span className="btn-rocket-sym">💾</span>
           <span className="btn-main-label">Save Settings</span>
@@ -1118,11 +1077,10 @@ function App() {
       </div>
 
       <div className="settings-cards-grid">
-        {/* API Connections Card */}
         <div className="section-card settings-card-box">
           <div className="card-header-clean">
-            <h3 className="section-title">🔌 API Integrations</h3>
-            <span className="status-badge-pill success">● All Live</span>
+            <h3 className="section-title">API Integrations</h3>
+            <span className="status-badge-pill success">Live</span>
           </div>
 
           <div className="settings-item-row">
@@ -1132,44 +1090,43 @@ function App() {
             </div>
             <button 
               className="table-action-btn"
-              onClick={() => showToast('✅ Razorpay Test API: 200 OK (Connection healthy)')}
+              onClick={() => showToast('Razorpay Test API: 200 OK')}
             >
-              Test Ping
+              Ping
             </button>
           </div>
 
           <div className="settings-item-row">
             <div>
               <div className="settings-item-title">Google Gemini 2.5 Flash</div>
-              <div className="settings-item-desc">Powers Root Cause Analysis & Hinglish Nudges</div>
+              <div className="settings-item-desc">Root Cause Analysis & Nudge Engine</div>
             </div>
             <button 
               className="table-action-btn"
-              onClick={() => showToast('✅ Google Gemini API: Responding in 320ms (Active)')}
+              onClick={() => showToast('Google Gemini API: Active')}
             >
-              Test Ping
+              Ping
             </button>
           </div>
 
           <div className="settings-item-row">
             <div>
               <div className="settings-item-title">OpenAI API (GPT-4o-mini)</div>
-              <div className="settings-item-desc">Multi-model fallback integration</div>
+              <div className="settings-item-desc">Secondary Fallback</div>
             </div>
-            <span className="status-badge-pill warning">Failover Active</span>
+            <span className="status-badge-pill warning">Standby</span>
           </div>
         </div>
 
-        {/* Compliance Rules Card */}
         <div className="section-card settings-card-box">
           <div className="card-header-clean">
-            <h3 className="section-title">🛡️ RBI Compliance & Policies</h3>
+            <h3 className="section-title">Compliance & Policies</h3>
           </div>
 
           <div className="settings-item-row">
             <div>
-              <div className="settings-item-title">Quiet Hours Protection (21:00 - 08:00 IST)</div>
-              <div className="settings-item-desc">Blocks customer notifications during resting hours</div>
+              <div className="settings-item-title">Quiet Hours (21:00 - 08:00 IST)</div>
+              <div className="settings-item-desc">Suppresses customer contact during night hours</div>
             </div>
             <input 
               type="checkbox" 
@@ -1184,8 +1141,8 @@ function App() {
 
           <div className="settings-item-row">
             <div>
-              <div className="settings-item-title">Max Retry Attempts per Transaction</div>
-              <div className="settings-item-desc">Caps auto-retries to prevent card throttling</div>
+              <div className="settings-item-title">Max Retry Attempts</div>
+              <div className="settings-item-desc">Limits automatic retry executions</div>
             </div>
             <select 
               value={settingsState.maxRetries}
@@ -1197,29 +1154,28 @@ function App() {
             >
               <option value="1">1 Retry</option>
               <option value="2">2 Retries</option>
-              <option value="3">3 Retries (Recommended)</option>
+              <option value="3">3 Retries</option>
               <option value="5">5 Retries</option>
             </select>
           </div>
 
           <div className="settings-item-row">
             <div>
-              <div className="settings-item-title">VIP Human Escalation Threshold</div>
-              <div className="settings-item-desc">Routes high-value failures immediately to human review</div>
+              <div className="settings-item-title">Escalation Threshold</div>
+              <div className="settings-item-desc">Routes transactions to manual queue</div>
             </div>
             <span style={{ fontWeight: 700, color: 'var(--color-blue)' }}>₹10,000</span>
           </div>
         </div>
 
-        {/* Webhook Endpoint Card */}
         <div className="section-card settings-card-box" style={{ gridColumn: '1 / -1' }}>
           <div className="card-header-clean">
-            <h3 className="section-title">🌐 Razorpay Webhook Configuration & Simulator</h3>
-            <span className="status-badge-pill success">● Listening (Port 8000)</span>
+            <h3 className="section-title">Webhook Configuration & Simulator</h3>
+            <span className="status-badge-pill success">Active</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: '280px' }}>
-              <div className="settings-item-title">Inbound Webhook Ingestion Endpoint</div>
+              <div className="settings-item-title">Inbound Webhook Endpoint</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', color: 'var(--color-blue)', marginTop: '6px', background: 'var(--bg-page)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-card)' }}>
                 http://localhost:8000/api/webhook/razorpay
               </div>
@@ -1227,7 +1183,7 @@ function App() {
             <div style={{ display: 'flex', gap: '8px' }}>
               <button 
                 className="table-action-btn"
-                onClick={() => showToast('📋 Webhook URL copied to clipboard!')}
+                onClick={() => showToast('Webhook URL copied')}
               >
                 Copy URL
               </button>
@@ -1237,7 +1193,7 @@ function App() {
                 disabled={webhookSimLoading}
               >
                 <span className="btn-rocket-sym">⚡</span>
-                <span className="btn-main-label">{webhookSimLoading ? 'Simulating...' : 'Dispatch Test Webhook Event'}</span>
+                <span className="btn-main-label">{webhookSimLoading ? 'Sending...' : 'Dispatch Webhook Event'}</span>
               </button>
             </div>
           </div>
@@ -1246,12 +1202,12 @@ function App() {
             <div style={{ marginTop: '14px', padding: '12px 16px', background: 'var(--bg-page)', borderRadius: '8px', borderLeft: '4px solid #10b981' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-dark)' }}>
-                  ✅ Inbound Webhook Processed ({webhookSimResult.event_processed})
+                  Webhook Received ({webhookSimResult.event_processed})
                 </span>
-                <span className="status-badge-pill success">Status: 200 OK</span>
+                <span className="status-badge-pill success">200 OK</span>
               </div>
               <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                Transaction ID: <strong>{webhookSimResult.transaction_id}</strong> • Recovery Strategy: <strong>{webhookSimResult.recovery_strategy?.join(', ')}</strong> • Audit Entries: <strong>{webhookSimResult.audit_trail_entries}</strong>
+                Transaction ID: <strong>{webhookSimResult.transaction_id}</strong> • Actions: <strong>{webhookSimResult.recovery_strategy?.join(', ')}</strong> • Audit Entries: <strong>{webhookSimResult.audit_trail_entries}</strong>
               </div>
             </div>
           )}
@@ -1260,9 +1216,6 @@ function App() {
     </div>
   )
 
-  // ═══════════════════════════════════════════════════════════════════
-  // MAIN ROUTE DISPATCHER
-  // ═══════════════════════════════════════════════════════════════════
   const renderContent = () => {
     switch (activeTab) {
       case 'sandbox':
@@ -1285,47 +1238,40 @@ function App() {
       default:
         return (
           <div className="dashboard-content-grid">
-            {/* Judge Presentation & Demo Scenarios Banner */}
             <div className="section-card judge-demo-banner">
               <div className="judge-banner-text">
-                <span className="judge-badge-star">🏆 JUDGE PRESENTATION PRESETS</span>
-                <span className="judge-banner-title">Select a Real-World Payment Failure Scenario to Benchmark Live:</span>
+                <span className="judge-badge-star">PRESETS</span>
+                <span className="judge-banner-title">Payment Failure Benchmark Scenarios:</span>
               </div>
               <div className="judge-presets-buttons">
                 <button className="judge-preset-btn" onClick={() => { setCount(150); runRecovery(150); }}>
-                  ⚡ Festive Rush (150 UPI Txns)
+                  Festive Rush (150 UPI Txns)
                 </button>
                 <button className="judge-preset-btn" onClick={() => { setCount(100); runRecovery(100); }}>
-                  💰 Month-End Salary Day (100 NSF)
+                  Salary Day (100 NSF)
                 </button>
                 <button className="judge-preset-btn" onClick={() => { setCount(50); runRecovery(50); }}>
-                  🛡️ RBI Quiet Hours (50 Txns)
+                  Quiet Hours (50 Txns)
                 </button>
                 <button className="judge-preset-btn" onClick={() => setActiveTab('sandbox')}>
-                  🧪 Open Live Sandbox ›
+                  Open Sandbox ›
                 </button>
               </div>
             </div>
 
-            {/* Top 5 Metric Cards */}
             <MetricsCards metrics={data?.metrics} summary={data?.results_summary} />
 
-            {/* Main 2-Column Split: 75% Analytics & Table | 25% Right Feeds */}
             <div className="dashboard-two-col-layout">
-              {/* Left Primary Analytics & Transactions Area */}
               <div className="dashboard-primary-column">
-                {/* Row of 3 Charts: Before/After, Failure Type, Actions Donut */}
                 <div className="middle-three-charts-row">
                   <BeforeAfterComparison comparison={data?.before_after} />
                   <FailureTypeChart data={data?.metrics?.by_failure_type} />
                   <ActionTypeChart data={data?.metrics?.by_action_type} />
                 </div>
 
-                {/* Bottom Transaction Table */}
                 <TransactionTable results={data?.sample_results} />
               </div>
 
-              {/* Right Dedicated Side Feed Column */}
               <div className="dashboard-sidefeed-column">
                 <InsightsFeed data={data} onViewAll={(tab) => setActiveTab(tab)} />
               </div>
@@ -1337,39 +1283,33 @@ function App() {
 
   return (
     <div className="dashboard-root-layout">
-      {/* Toast Notification Alert */}
       {toastMessage && (
         <div className="floating-toast-alert">
           {toastMessage}
         </div>
       )}
 
-      {/* Left Navigation Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      {/* Main App Content */}
       <main className="dashboard-main-view">
-        {/* Top Header Bar */}
         <header className="dashboard-top-header">
           <div className="header-title-block">
-            <div className="welcome-tag">Welcome back, Raj! 👋</div>
+            <div className="welcome-tag">Dashboard</div>
             <h1 className="main-heading">
-              RecoverAI <span className="heading-grad-text">Dashboard</span>
+              RecoverAI <span className="heading-grad-text">Engine</span>
             </h1>
-            <div className="heading-subline">AI-Powered Payment Recovery Intelligence</div>
+            <div className="heading-subline">Autonomous Payment Recovery Platform</div>
             <div className="track-badge-pill">
-              <span className="rocket-sym">🚀</span> RAZORPAY BUILDATHON 2026 — TRACK 03
+              Razorpay Integration
             </div>
           </div>
 
           <div className="header-actions-block">
-            {/* Top Status & Controls */}
             <div className="header-status-line">
               <span className="online-agent-pill">
-                <span className="live-pulse-dot"></span> AI Agent Online
+                <span className="live-pulse-dot"></span> Active
               </span>
 
-              {/* Notification Bell Dropdown */}
               <div style={{ position: 'relative' }}>
                 <button 
                   className="header-tool-btn notif-btn" 
@@ -1383,11 +1323,10 @@ function App() {
                   <span className="notif-count-badge">{alertsList.length}</span>
                 </button>
                 
-                {/* Floating Notifications Dropdown Popover */}
                 {showNotifications && (
                   <div className="notifications-popover-menu">
                     <div className="notif-popover-header">
-                      <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>Recent Alerts & Events</span>
+                      <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>Recent Alerts</span>
                       <span className="nav-badge-pill">{alertsList.length}</span>
                     </div>
                     <div className="notif-items-list">
@@ -1404,13 +1343,12 @@ function App() {
                       ))}
                     </div>
                     <div className="notif-popover-footer" onClick={() => { setActiveTab('alerts'); setShowNotifications(false); }}>
-                      View all in Alerts Center →
+                      View Alerts Center →
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Theme Toggle Button */}
               <button 
                 className="header-tool-btn theme-toggle-btn" 
                 onClick={toggleTheme}
@@ -1435,13 +1373,12 @@ function App() {
                 )}
               </button>
 
-              <div className="header-avatar-circle" title="Raj Barot (Developer)">RB</div>
+              <div className="header-avatar-circle" title="Raj Barot">RB</div>
             </div>
 
-            {/* Run Recovery Control Bar */}
             <div className="run-controls-row">
               <div className="count-picker-box">
-                <label htmlFor="tx-count-input" className="count-label">Transactions to process</label>
+                <label htmlFor="tx-count-input" className="count-label">Batch Size</label>
                 <input
                   id="tx-count-input"
                   name="tx-count-input"
@@ -1461,34 +1398,31 @@ function App() {
               >
                 <span className="btn-rocket-sym">🚀</span>
                 <span className="btn-main-label">
-                  {loading ? 'Running Pipeline...' : 'Run Recovery Pipeline'}
+                  {loading ? 'Running...' : 'Run Pipeline'}
                 </span>
                 <span className="btn-arrow-sym">›</span>
               </button>
             </div>
 
             <div className="run-helper-hint">
-              Simulate failed payments and watch AI recover revenue in real-time
+              Simulate failed payments and execute recovery
             </div>
           </div>
         </header>
 
-        {/* Main Dashboard Screen View */}
         {renderContent()}
 
-        {/* Global Footer */}
         <footer className="dashboard-bottom-footer">
-          RecoverAI 2026 — Built for Razorpay AI Buildathon 🤍
+          RecoverAI Platform
         </footer>
       </main>
 
-      {/* Loading Overlay Animation */}
       {loading && (
         <div className="pipeline-loading-overlay">
           <div className="pipeline-spinner-ring"></div>
-          <div className="pipeline-spinner-title">AI Payment Recovery Pipeline Active</div>
+          <div className="pipeline-spinner-title">Recovery Pipeline Active</div>
           <div className="pipeline-spinner-steps">
-            Ingest ➔ ML Classify ➔ Root Cause Analysis ➔ Strategy Engine ➔ Compliance Guardrails ➔ Audit Log
+            Ingest → Classify → Diagnostics → Strategy → Guardrails → Audit
           </div>
         </div>
       )}

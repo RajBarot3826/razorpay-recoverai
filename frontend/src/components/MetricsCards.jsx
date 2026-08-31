@@ -1,5 +1,4 @@
 export default function MetricsCards({ metrics, summary }) {
-  // Provide defaults matching the reference design if metrics are empty or loading
   const total = summary?.total ?? metrics?.total_processed ?? 100
   const recovered = summary?.recovered ?? metrics?.total_recovered ?? 52
   const failed = summary?.failed ?? metrics?.total_failed ?? 48
@@ -63,11 +62,11 @@ export default function MetricsCards({ metrics, summary }) {
       subtitle: 'saved from failed payments',
       trend: '31.2% vs yesterday',
       trendUp: true,
-      color: 'amber',
+      color: 'gold',
       icon: (
-        <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>₹</span>
+        <span style={{ fontSize: '18px', fontWeight: 800, fontFamily: 'system-ui' }}>₹</span>
       ),
-      sparklinePoints: '0,24 15,20 30,18 45,14 60,11 75,13 90,5 100,4',
+      sparklinePoints: '0,24 15,22 30,19 45,17 60,12 75,10 90,5 100,4',
     },
     {
       id: 'rate',
@@ -78,49 +77,45 @@ export default function MetricsCards({ metrics, summary }) {
       trendUp: true,
       color: 'purple',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="20" x2="18" y2="10"/>
           <line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
         </svg>
       ),
-      sparklinePoints: '0,21 15,17 30,19 45,12 60,10 75,7 90,4 100,3',
+      sparklinePoints: '0,20 15,16 30,18 45,12 60,14 75,8 90,6 100,2',
     },
   ]
 
   return (
-    <div className="metrics-row-container">
-      {cards.map((c) => (
-        <div key={c.id} className={`kpi-card card-${c.color}`}>
-          <div className="kpi-top">
-            <div className={`kpi-icon-badge badge-${c.color}`}>
-              {c.icon}
-            </div>
-            <div className="kpi-header-info">
-              <span className="kpi-title">{c.title}</span>
-              <button className="kpi-more-dots">···</button>
-            </div>
+    <div className="metrics-cards-row">
+      {cards.map((card) => (
+        <div key={card.id} className={`metric-card border-${card.color}`}>
+          <div className="card-top-header">
+            <span className="card-title-text">{card.title}</span>
+            <span className="card-dots-icon">•••</span>
           </div>
 
-          <div className="kpi-main-val">{c.value}</div>
-          <div className="kpi-subtext">{c.subtitle}</div>
-
-          <div className="kpi-bottom">
-            <div className={`kpi-trend ${c.trendUp ? 'trend-up' : 'trend-down'}`}>
-              <span className="trend-arrow-sym">{c.trendUp ? '↑' : '↓'}</span> {c.trend}
+          <div className="card-primary-content">
+            <div className={`metric-icon-box bg-${card.color}`}>
+              {card.icon}
             </div>
-            <div className="kpi-sparkline">
-              <svg width="65" height="24" viewBox="0 0 100 28" fill="none">
+            <div className="metric-value-number">{card.value}</div>
+          </div>
+
+          <div className="metric-subtitle-text">{card.subtitle}</div>
+
+          <div className="card-bottom-sparkline-row">
+            <div className={`trend-indicator-text ${card.trendUp ? 'trend-green' : 'trend-red'}`}>
+              <span className="trend-arrow">{card.trendUp ? '↑' : '↓'}</span>
+              {card.trend}
+            </div>
+            <div className="sparkline-wrapper">
+              <svg width="72" height="24" viewBox="0 0 100 24" fill="none">
                 <polyline
-                  points={c.sparklinePoints}
-                  fill="none"
-                  stroke={
-                    c.color === 'blue' ? '#3b82f6' :
-                    c.color === 'green' ? '#10b981' :
-                    c.color === 'red' ? '#ef4444' :
-                    c.color === 'amber' ? '#f59e0b' : '#8b5cf6'
-                  }
-                  strokeWidth="3.5"
+                  points={card.sparklinePoints}
+                  className={`sparkline-path stroke-${card.color}`}
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />

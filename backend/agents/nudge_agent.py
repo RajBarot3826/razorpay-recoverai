@@ -1,9 +1,3 @@
-"""
-Customer Nudge Agent for RecoverAI.
-Generates personalized recovery messages in English and Hinglish
-with proper channel selection (SMS, WhatsApp, Push, Email).
-"""
-
 import logging
 import random
 from datetime import datetime, timezone
@@ -14,7 +8,6 @@ from backend.compliance.guardrails import ComplianceGuardrails
 
 logger = logging.getLogger(__name__)
 
-# Hinglish nudge templates by failure type
 TEMPLATES = {
     "INSUFFICIENT_FUNDS": {
         "hinglish": [
@@ -60,100 +53,57 @@ TEMPLATES = {
             "{name} ji, payment process nahi ho paya. Ek aur baar try karein ya doosra method use karein! 💳",
         ],
         "english": [
-            "Hi {name}, your payment of Rs {amount} could not be processed. Please try again or use an alternative method.",
+            "Hi {name}, your payment of Rs {amount} was not completed. Please click here to retry with an alternate payment method.",
+        ],
+        "hindi": [
+            "नमस्ते {name}, आपका ₹{amount} का भुगतान पूरा नहीं हो सका। कृपया पुनः प्रयास करें।",
         ],
     },
 }
 
-# Channel selection based on amount and failure type
-CHANNEL_PRIORITY = {
-    "high_value": ["whatsapp", "sms", "email"],      # > Rs 5000
-    "medium_value": ["sms", "whatsapp", "push"],      # Rs 500-5000
-    "low_value": ["push", "sms"],                      # < Rs 500
-}
-
-
 class CustomerNudgeAgent:
-    """
-    Generates personalized recovery messages in English and Hinglish.
-    Selects optimal communication channel based on transaction context.
-    """
-
     def __init__(self, guardrails: ComplianceGuardrails = None):
         self.guardrails = guardrails or ComplianceGuardrails()
-
-    def _select_channel(self, transaction: PaymentTransaction) -> str:
-        """Select communication channel based on transaction value."""
-        if transaction.amount > 5000:
-            return random.choice(CHANNEL_PRIORITY["high_value"])
-        elif transaction.amount > 500:
-            return random.choice(CHANNEL_PRIORITY["medium_value"])
-        else:
-            return random.choice(CHANNEL_PRIORITY["low_value"])
-
-    def _generate_message(
-        self, transaction: PaymentTransaction, failure_type: str, language: str = "hinglish"
-    ) -> str:
-        """Generate a personalized nudge message."""
-        # Find matching template category
-        template_key = "DEFAULT"
-        for key in TEMPLATES:
-            if key in failure_type.upper():
-                template_key = key
-                break
-
-        templates = TEMPLATES[template_key].get(language, TEMPLATES[template_key].get("hinglish", []))
-        if not templates:
-            templates = TEMPLATES["DEFAULT"]["hinglish"]
-
-        template = random.choice(templates)
-
-        # Extract customer name (in real system, would look up from DB)
-        customer_name = f"Customer-{transaction.customer_id[-4:]}" if transaction.customer_id else "Customer"
-
-        return template.format(
-            name=customer_name,
-            amount=f"{transaction.amount:,.2f}",
-            currency=transaction.currency,
-        )
 
     async def generate_nudge(
         self,
         transaction: PaymentTransaction,
         classification: FailureClassification,
         language: str = "hinglish",
+        channel: str = "whatsapp",
     ) -> RecoveryAction:
-        """Generate a personalized nudge message with channel selection."""
         proposed_action = RecoveryAction(
-            id=f"nudge_{int(datetime.now(timezone.utc).timestamp() * 1000)}",
-            transaction_id=transaction.id,
+            id=f"nudge_{int(datetime.now(timezone.utc).timestamp()*1000)}",
             action_type="CUSTOMER_NUDGE",
             status="PENDING",
-            details="Generating nudge...",
-            created_at=datetime.now(timezone.utc),
+            details={"channel": channel, "language": language},
         )
 
-        # Compliance check
         allowed, reason = self.guardrails.check(transaction, proposed_action)
         if not allowed:
             proposed_action.status = "BLOCKED"
-            proposed_action.outcome = f"Blocked by guardrails: {reason}"
-            proposed_action.completed_at = datetime.now(timezone.utc)
+            proposed_action.outcome = f"Blocked: {reason}"
             return proposed_action
 
-        # Generate message and select channel
-        failure_type = str(classification.failure_type)
-        channel = self._select_channel(transaction)
-        message = self._generate_message(transaction, failure_type, language)
+        failure_type = str(classification.failure_type).upper()
+        ft_templates = TEMPLATES.get(failure_type, TEMPLATES["DEFAULT"])
+        lang_templates = ft_templates.get(language.lower(), ft_templates.get("hinglish", TEMPLATES["DEFAULT"]["hinglish"]))
 
-        proposed_action.status = "COMPLETED"
+        template = random.choice(lang_templates) if lang_templates else TEMPLATES["DEFAULT"]["english"][0]
+        customer_name = transaction.metadata.get("customer_name", "Customer") if transaction.metadata else "Customer"
+        
+        message = template.format(
+            name=customer_name,
+            amount=f"{transaction.amount:,.2f}",
+        )
+
         proposed_action.details = {
             "channel": channel,
             "language": language,
+            "recipient": customer_name,
             "message": message,
-            "failure_type": failure_type,
         }
-        proposed_action.outcome = f"Nudge queued via {channel.upper()}"
-        proposed_action.completed_at = datetime.now(timezone.utc)
+        proposed_action.status = "COMPLETED"
+        proposed_action.outcome = message
 
         return proposed_action

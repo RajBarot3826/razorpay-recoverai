@@ -1,15 +1,7 @@
-"""
-RecoverAI — FastAPI Application
-
-Main entry point for the RecoverAI API.
-Provides endpoints for simulating failures, classifying them,
-running recovery pipelines, and viewing metrics.
-
-Run with: uvicorn backend.main:app --reload --port 8000
-"""
-
 import logging
 from typing import List, Dict, Any
+import uuid
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -23,18 +15,16 @@ from backend.models.schemas import (
 )
 from backend.pipeline.recovery_pipeline import RecoveryPipeline
 from backend.simulator.failure_generator import PaymentFailureSimulator
+from backend.razorpay.client import razorpay_client
 
-# ─── Logging ────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s | %(name)-25s | %(levelname)-7s | %(message)s",
+    format="%(asctime)s | %(name)-20s | %(levelname)-7s | %(message)s",
 )
 logger = logging.getLogger(__name__)
 
-# ─── App ────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="RecoverAI",
-    description="AI-Powered Payment Recovery Agent — Razorpay Buildathon 2026",
     version="1.0.0",
 )
 
@@ -46,32 +36,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ─── Global Instances ───────────────────────────────────────────────────────
 pipeline = RecoveryPipeline()
 simulator = PaymentFailureSimulator()
 
-
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database and train classifier on startup."""
-    logger.info("🚀 Initializing RecoverAI...")
     init_db()
-
-    # Self-train classifier if no model exists
     if pipeline.classifier.model is None:
-        logger.info("🧠 No trained model found. Self-training classifier...")
-        metrics = pipeline.classifier.self_train(n_samples=500)
-        logger.info(f"✅ Classifier trained: accuracy={metrics.get('accuracy', 0):.3f}")
-
-    logger.info("✅ RecoverAI startup complete.")
-
-
-# ─── Health ─────────────────────────────────────────────────────────────────
+        pipeline.classifier.self_train(n_samples=500)
 
 @app.get("/")
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
     return {
         "status": "healthy",
         "service": "RecoverAI",
@@ -79,12 +55,8 @@ async def health_check():
         "classifier_ready": pipeline.classifier.model is not None,
     }
 
-
-# ─── Simulation ─────────────────────────────────────────────────────────────
-
 @app.post("/api/simulate")
 async def simulate_transactions(request: SimulateRequest):
-    """Generate N simulated failed transactions."""
     try:
         transactions = simulator.generate_batch(request.count)
         return {
@@ -95,39 +67,17 @@ async def simulate_transactions(request: SimulateRequest):
         logger.error(f"Simulation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ─── Classification ─────────────────────────────────────────────────────────
-
 @app.post("/api/classify")
 async def classify_transaction(transaction: PaymentTransaction):
-    """Classify a single transaction's failure type."""
     try:
         classification = pipeline.classifier.classify(transaction)
-        return classification.model_dump(mode="json")
+        return classification.model_dump()
     except Exception as e:
         logger.error(f"Classification error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ─── Root Cause Analysis ────────────────────────────────────────────────────
-
-@app.post("/api/analyze")
-async def analyze_root_cause(transaction: PaymentTransaction):
-    """Run root cause analysis on a single transaction."""
-    try:
-        classification = pipeline.classifier.classify(transaction)
-        root_cause = await pipeline.root_cause_analyzer.analyze(transaction, classification)
-        return root_cause.model_dump(mode="json")
-    except Exception as e:
-        logger.error(f"Analysis error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ─── Recovery ────────────────────────────────────────────────────────────────
-
 @app.post("/api/recover")
-async def recover_single(transaction: PaymentTransaction):
-    """Run the full recovery pipeline on a single transaction."""
+async def recover_transaction(transaction: PaymentTransaction):
     try:
         result = await pipeline.process_single(transaction)
         return result.model_dump(mode="json")
@@ -135,40 +85,29 @@ async def recover_single(transaction: PaymentTransaction):
         logger.error(f"Recovery error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.post("/api/recover/batch")
 async def recover_batch(transactions: List[PaymentTransaction]):
-    """Run the full recovery pipeline on a batch of transactions."""
     try:
         results = await pipeline.process_batch(transactions)
+        metrics = pipeline.get_metrics()
         return {
-            "count": len(results),
+            "processed": len(results),
             "recovered": sum(1 for r in results if r.success),
             "failed": sum(1 for r in results if not r.success),
+            "recovery_rate": f"{(sum(1 for r in results if r.success) / len(results) * 100):.1f}%" if results else "0%",
+            "metrics": metrics.model_dump(),
             "results": [r.model_dump(mode="json") for r in results],
         }
     except Exception as e:
         logger.error(f"Batch recovery error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ─── Simulate + Recover (Convenience) ───────────────────────────────────────
-
 @app.post("/api/demo")
-async def demo_full_pipeline(request: SimulateRequest):
-    """
-    Convenience endpoint: generate failures AND run recovery in one call.
-    Perfect for demos and the pitch video.
-    """
+async def run_demo(request: SimulateRequest):
     try:
-        # 1. Generate failures
-        transactions = simulator.generate_batch(request.count)
-        logger.info(f"Generated {len(transactions)} failed transactions")
-
-        # 2. Run recovery
+        count = min(request.count, 500)
+        transactions = simulator.generate_batch(count)
         results = await pipeline.process_batch(transactions)
-
-        # 3. Get metrics
         metrics = pipeline.get_metrics()
         comparison = pipeline.get_before_after_comparison()
 
@@ -188,32 +127,20 @@ async def demo_full_pipeline(request: SimulateRequest):
         logger.error(f"Demo pipeline error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ─── Metrics ─────────────────────────────────────────────────────────────────
-
 @app.get("/api/metrics")
 async def get_metrics():
-    """Get aggregate recovery metrics."""
     return pipeline.get_metrics().model_dump()
-
 
 @app.get("/api/metrics/comparison")
 async def get_metrics_comparison():
-    """Get before/after comparison (AI vs baseline)."""
     return pipeline.get_before_after_comparison()
-
 
 @app.get("/api/metrics/report")
 async def get_metrics_report():
-    """Get markdown-formatted metrics report."""
     return {"report": pipeline.metrics.export_report()}
-
-
-# ─── Transaction History ─────────────────────────────────────────────────────
 
 @app.get("/api/transactions")
 async def list_transactions():
-    """List all processed transactions with summary."""
     return [
         {
             "transaction_id": tid,
@@ -225,19 +152,21 @@ async def list_transactions():
         for tid, r in pipeline.results_store.items()
     ]
 
-
 @app.get("/api/transactions/{transaction_id}")
 async def get_transaction(transaction_id: str):
-    """Get full detail including audit trail for one transaction."""
     res = pipeline.get_transaction_result(transaction_id)
     if not res:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return res.model_dump(mode="json")
 
+@app.get("/api/audit/{transaction_id}")
+async def get_audit_trail(transaction_id: str):
+    trail = pipeline.get_audit_trail(transaction_id)
+    return {"transaction_id": transaction_id, "entries": [e.model_dump(mode="json") for e in trail]}
 
-from backend.razorpay.client import razorpay_client
-from datetime import datetime, timezone
-import uuid
+@app.get("/api/classifier/features")
+async def get_classifier_features():
+    return pipeline.classifier.get_feature_importance()
 
 class CustomRecoveryRequest(BaseModel):
     amount: float = 2499.0
@@ -246,11 +175,11 @@ class CustomRecoveryRequest(BaseModel):
     failure_reason: str = "UPI transaction timed out waiting for bank approval"
     customer_name: str = "Aarav Sharma"
     customer_phone: str = "+91 98765 43210"
-    language: str = "hinglish" # "hinglish", "english", "hindi"
-    channel: str = "whatsapp" # "whatsapp", "sms", "email"
+    language: str = "hinglish"
+    channel: str = "whatsapp"
 
 class RazorpayOrderRequest(BaseModel):
-    amount: float = 500.0  # In INR
+    amount: float = 500.0
     currency: str = "INR"
     receipt: str = "rcpt_recoverai_001"
     notes: Dict[str, Any] = {}
@@ -265,10 +194,6 @@ class WebhookSimulateRequest(BaseModel):
 
 @app.post("/api/recover/custom")
 async def recover_custom_transaction(request: CustomRecoveryRequest):
-    """
-    Interactive Sandbox: Run single customized failed payment through full AI pipeline.
-    Returns ML classification, LLM root cause, decision flow, compliance check & generated Hinglish WhatsApp nudge.
-    """
     try:
         tx_id = f"txn_{uuid.uuid4().hex[:12]}"
         tx = PaymentTransaction(
@@ -290,8 +215,6 @@ async def recover_custom_transaction(request: CustomRecoveryRequest):
         )
 
         result = await pipeline.process_single(tx)
-        
-        # Generate dynamic personalized nudge based on chosen language
         classification = pipeline.classifier.classify(tx)
         nudge_action = await pipeline.nudge_agent.generate_nudge(tx, classification, language=request.language or "hinglish")
         
@@ -313,10 +236,6 @@ async def recover_custom_transaction(request: CustomRecoveryRequest):
 
 @app.post("/api/webhook/razorpay")
 async def handle_razorpay_webhook(payload: Dict[str, Any]):
-    """
-    Real Inbound Webhook Listener for Razorpay payment events.
-    Parses 'payment.failed' payloads, extracts Indian gateway metadata, and triggers AI recovery pipeline.
-    """
     try:
         event = payload.get("event", "payment.failed")
         payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
@@ -354,7 +273,6 @@ async def handle_razorpay_webhook(payload: Dict[str, Any]):
 
 @app.post("/api/webhook/simulate")
 async def simulate_webhook_event(req: WebhookSimulateRequest):
-    """Simulate inbound webhook payload from Razorpay."""
     mock_payload = {
         "event": req.event,
         "payload": {
@@ -377,7 +295,6 @@ async def simulate_webhook_event(req: WebhookSimulateRequest):
 
 @app.post("/api/razorpay/create-order")
 async def create_live_razorpay_order(req: RazorpayOrderRequest):
-    """Create real test order on Razorpay using live test credentials."""
     try:
         amount_paise = int(req.amount * 100)
         order = await razorpay_client.create_payment(
@@ -399,31 +316,8 @@ async def create_live_razorpay_order(req: RazorpayOrderRequest):
         return {
             "success": False,
             "error": str(e),
-            "order_id": f"order_simulated_{uuid.uuid4().hex[:10]}"
+            "order_id": f"order_mock_{uuid.uuid4().hex[:8]}",
+            "amount_inr": req.amount,
+            "currency": req.currency,
+            "status": "created"
         }
-
-# ─── Audit ───────────────────────────────────────────────────────────────────
-
-@app.get("/api/audit/{transaction_id}")
-async def get_audit_trail(transaction_id: str):
-    """Get audit trail for a specific transaction."""
-    trail = pipeline.audit_logger.get_trail(transaction_id)
-    return {
-        "transaction_id": transaction_id,
-        "entries": [e.model_dump(mode="json") for e in trail],
-    }
-
-
-# ─── Classifier Info ─────────────────────────────────────────────────────────
-
-@app.get("/api/classifier/features")
-async def get_feature_importance():
-    """Get feature importance from the ML classifier."""
-    return pipeline.classifier.get_feature_importance()
-
-
-# ─── Entry Point ─────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)

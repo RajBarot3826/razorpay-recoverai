@@ -1,10 +1,3 @@
-"""
-LLM-powered Root Cause Analyzer for RecoverAI.
-Uses OpenAI GPT-4 or Google Gemini to analyze payment failures
-and produce structured root cause analysis. Falls back to
-rule-based analysis if API keys are unavailable.
-"""
-
 import json
 import logging
 from typing import Dict, Any, Optional
@@ -34,247 +27,230 @@ Severity guidelines:
 Consider Indian payment context: UPI, IMPS, NEFT, RuPay cards, net banking, salary cycles (1st and 28th), festival seasons.
 """
 
-
 class RootCauseAnalyzer:
-    """
-    LLM-powered Root Cause Analyzer for payment failures.
-    Uses OpenAI (primary) or Google Gemini (fallback) to analyze
-    the transaction and failure features.
-    Falls back to rule-based analysis when no API keys are available.
-    """
-
     def __init__(self, openai_api_key: Optional[str] = None, gemini_api_key: Optional[str] = None):
         self.openai_api_key = openai_api_key or os.environ.get("OPENAI_API_KEY")
         self.gemini_api_key = gemini_api_key or os.environ.get("GEMINI_API_KEY")
         self._openai_client = None
         self._gemini_model = None
 
-        # Initialize OpenAI client if available
         if self.openai_api_key:
             try:
                 from openai import OpenAI
                 self._openai_client = OpenAI(api_key=self.openai_api_key)
-                logger.info("RootCauseAnalyzer: OpenAI client initialized")
-            except Exception as e:
-                logger.warning(f"Failed to init OpenAI: {e}")
+            except Exception:
+                pass
 
-        # Initialize Gemini client if available
-        if self.gemini_api_key and not self._openai_client:
+        if self.gemini_api_key:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=self.gemini_api_key)
-                self._gemini_model = genai.GenerativeModel("gemini-1.5-flash")
-                logger.info("RootCauseAnalyzer: Gemini client initialized")
-            except Exception as e:
-                logger.warning(f"Failed to init Gemini: {e}")
+                self._gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+            except Exception:
+                try:
+                    import google.generativeai as genai
+                    genai.configure(api_key=self.gemini_api_key)
+                    self._gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                except Exception:
+                    pass
 
     async def analyze(self, transaction: PaymentTransaction, classification: FailureClassification) -> RootCauseAnalysis:
-        """Analyze a failed transaction using LLM or rule-based fallback."""
         user_prompt = self._build_user_prompt(transaction, classification)
 
-        # Try OpenAI first
         if self._openai_client:
             try:
                 result = await self._analyze_openai(user_prompt, transaction, classification)
                 if result:
                     return result
-            except Exception as e:
-                logger.warning(f"OpenAI analysis failed: {e}")
+            except Exception:
+                pass
 
-        # Try Gemini
         if self._gemini_model:
             try:
                 result = await self._analyze_gemini(user_prompt, transaction, classification)
                 if result:
                     return result
-            except Exception as e:
-                logger.warning(f"Gemini analysis failed: {e}")
+            except Exception:
+                pass
 
-        # Fallback to rule-based
-        logger.info("Using rule-based fallback for root cause analysis")
         return self._rule_based_analysis(transaction, classification)
 
     def _build_user_prompt(self, transaction: PaymentTransaction, classification: FailureClassification) -> str:
         meta = transaction.metadata or {}
         return f"""Analyze this failed payment:
 
-Transaction ID: {transaction.id}
-Amount: {transaction.currency} {transaction.amount:,.2f}
-Payment Method: {transaction.method}
-Failure Reason: {transaction.failure_reason}
-ML Classification: {classification.failure_type} (confidence: {classification.confidence:.2f})
-Device: {meta.get('device', 'unknown')}
-Location: {meta.get('location', 'unknown')}
-Attempt Count: {meta.get('attempt_count', 1)}
-Time: {transaction.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') if transaction.timestamp else 'unknown'}
-
-Provide root cause analysis as JSON."""
+- Amount: INR {transaction.amount:,.2f}
+- Method: {transaction.method}
+- Failure Reason: {transaction.failure_reason}
+- Classification: {classification.failure_type} (Confidence: {classification.confidence_score:.2f})
+- Time of Day: {transaction.timestamp.strftime('%H:%M')} (Day {transaction.timestamp.day} of month)
+- Attempt Count: {meta.get('attempt_count', 1)}
+- Device: {meta.get('device', 'unknown')}
+"""
 
     async def _analyze_openai(self, user_prompt: str, transaction: PaymentTransaction, classification: FailureClassification) -> Optional[RootCauseAnalysis]:
-        """Use OpenAI GPT-4 for analysis."""
         import asyncio
-
-        def _call():
-            response = self._openai_client.chat.completions.create(
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: self._openai_client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt}
+                    {"role": "user", "content": user_prompt},
                 ],
                 response_format={"type": "json_object"},
-                temperature=0.3,
-                max_tokens=500,
-            )
-            return response.choices[0].message.content
+                max_tokens=300,
+                temperature=0.2,
+            ),
+        )
 
-        loop = asyncio.get_event_loop()
-        raw = await loop.run_in_executor(None, _call)
-        return self._parse_llm_response(raw, transaction.id)
+        content = response.choices[0].message.content
+        data = json.loads(content)
+        return RootCauseAnalysis(
+            root_cause=data.get("root_cause", f"Payment failed: {classification.failure_type}"),
+            explanation=data.get("explanation", ""),
+            severity=data.get("severity", "MEDIUM"),
+            recommended_actions=self._map_actions(data.get("recommended_actions", []), classification.failure_type),
+            llm_model_used="gpt-4o-mini",
+        )
 
     async def _analyze_gemini(self, user_prompt: str, transaction: PaymentTransaction, classification: FailureClassification) -> Optional[RootCauseAnalysis]:
-        """Use Google Gemini for analysis."""
         import asyncio
-
-        def _call():
-            response = self._gemini_model.generate_content(
-                f"{SYSTEM_PROMPT}\n\n{user_prompt}",
-                generation_config={"temperature": 0.3, "max_output_tokens": 500},
-            )
-            return response.text
-
         loop = asyncio.get_event_loop()
-        raw = await loop.run_in_executor(None, _call)
-        return self._parse_llm_response(raw, transaction.id)
+        prompt = f"{SYSTEM_PROMPT}\n\n{user_prompt}\n\nReturn JSON ONLY:"
+        response = await loop.run_in_executor(
+            None,
+            lambda: self._gemini_model.generate_content(prompt),
+        )
 
-    def _parse_llm_response(self, raw: str, transaction_id: str) -> Optional[RootCauseAnalysis]:
-        """Parse LLM JSON response into RootCauseAnalysis."""
-        try:
-            # Handle markdown code blocks
-            text = raw.strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1]
-                text = text.rsplit("```", 1)[0]
+        text = response.text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        if text.startswith("```"):
+            text = text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
 
-            data = json.loads(text)
-            return RootCauseAnalysis(
-                transaction_id=transaction_id,
-                root_cause=data.get("root_cause", "Unknown"),
-                explanation=data.get("explanation", "Unable to determine"),
-                severity=data.get("severity", "MEDIUM"),
-                recommended_actions=data.get("recommended_actions", []),
-            )
-        except (json.JSONDecodeError, KeyError) as e:
-            logger.warning(f"Failed to parse LLM response: {e}")
-            return None
+        data = json.loads(text.strip())
+        return RootCauseAnalysis(
+            root_cause=data.get("root_cause", f"Payment failed: {classification.failure_type}"),
+            explanation=data.get("explanation", ""),
+            severity=data.get("severity", "MEDIUM"),
+            recommended_actions=self._map_actions(data.get("recommended_actions", []), classification.failure_type),
+            llm_model_used="gemini-2.5-flash",
+        )
+
+    def _map_actions(self, raw_actions: list, failure_type: str) -> list:
+        from backend.models.schemas import ActionType
+        actions = []
+        for a in raw_actions:
+            a_upper = str(a).upper().replace(" ", "_")
+            for at in ActionType:
+                if at.value in a_upper or a_upper in at.value:
+                    if at not in actions:
+                        actions.append(at)
+
+        if not actions:
+            rules = self._get_rule_actions(failure_type)
+            actions = rules
+
+        return actions
+
+    def _get_rule_actions(self, failure_type: str) -> list:
+        from backend.models.schemas import ActionType
+        mapping = {
+            "INSUFFICIENT_FUNDS": [ActionType.CUSTOMER_NUDGE, ActionType.SMART_RETRY],
+            "BANK_TIMEOUT": [ActionType.SMART_RETRY],
+            "UPI_TIMEOUT": [ActionType.SMART_RETRY, ActionType.CUSTOMER_NUDGE],
+            "NETWORK_ERROR": [ActionType.SMART_RETRY],
+            "INVALID_CARD": [ActionType.ALTERNATIVE_METHOD, ActionType.CUSTOMER_NUDGE],
+            "EXPIRED_CARD": [ActionType.ALTERNATIVE_METHOD, ActionType.CUSTOMER_NUDGE],
+            "AUTHENTICATION_FAILED": [ActionType.CUSTOMER_NUDGE, ActionType.SMART_RETRY],
+            "INCORRECT_PIN": [ActionType.CUSTOMER_NUDGE],
+            "LIMIT_EXCEEDED": [ActionType.ALTERNATIVE_METHOD, ActionType.CUSTOMER_NUDGE],
+            "RISK_BLOCKED": [ActionType.ESCALATION],
+            "APP_NOT_RESPONDING": [ActionType.SMART_RETRY],
+            "SESSION_EXPIRED": [ActionType.CUSTOMER_NUDGE, ActionType.SMART_RETRY],
+        }
+        return mapping.get(failure_type, [ActionType.SMART_RETRY])
 
     def _rule_based_analysis(self, transaction: PaymentTransaction, classification: FailureClassification) -> RootCauseAnalysis:
-        """Deterministic rule-based fallback for root cause analysis."""
-        failure_type = str(classification.failure_type).upper() if classification.failure_type else ""
+        ft = classification.failure_type.value if hasattr(classification.failure_type, "value") else str(classification.failure_type)
 
-        # Default values
-        severity = "MEDIUM"
-        root_cause = f"Payment failure: {transaction.failure_reason}"
-        explanation = "Transaction failed for unclassified reasons."
-        recommendations = ["Suggest alternative payment method"]
-
-        if "INSUFFICIENT_FUNDS" in failure_type:
-            severity = "LOW"
-            root_cause = "Customer lacks sufficient funds in their account."
-            explanation = (
+        explanations = {
+            "INSUFFICIENT_FUNDS": (
                 "The bank declined the transaction due to non-sufficient funds (NSF). "
                 "This is common around month-end when balances are low. "
-                "Recovery via salary-day retry or nudge to add funds."
-            )
-            recommendations = [
-                "Nudge customer to add funds",
-                "Retry on next salary day (1st or 28th of month)",
-                "Suggest smaller partial payment option",
-            ]
-        elif "RISK" in failure_type or "FRAUD" in failure_type:
-            severity = "CRITICAL"
-            root_cause = "Transaction flagged by risk management system."
-            explanation = (
-                "High risk indicators were detected. This could be unusual transaction "
-                "pattern, location mismatch, or suspicious device. Do NOT retry automatically."
-            )
-            recommendations = [
-                "Escalate to human review immediately",
-                "Do not retry automatically",
-                "Verify customer identity if they contact support",
-            ]
-        elif "NETWORK" in failure_type or "TIMEOUT" in failure_type:
-            severity = "LOW"
-            root_cause = "Network timeout or gateway downtime."
-            explanation = (
-                "The acquiring bank or payment gateway did not respond in time. "
-                "This is typically a transient issue that resolves within minutes."
-            )
-            recommendations = [
-                "Retry after 15 minutes",
-                "Try routing through alternative gateway",
-                "Check bank status page for outages",
-            ]
-        elif "EXPIRED" in failure_type:
-            severity = "MEDIUM"
-            root_cause = "Payment card has expired."
-            explanation = (
-                "The credit/debit card used has passed its expiry date. "
-                "Customer needs to use a different card or payment method."
-            )
-            recommendations = [
-                "Nudge customer to update card details",
-                "Suggest UPI as alternative (higher success rate in India)",
-            ]
-        elif "INVALID_CARD" in failure_type:
-            severity = "MEDIUM"
-            root_cause = "Invalid card details entered."
-            explanation = (
-                "The card number, CVV, or expiry date entered is incorrect. "
-                "Customer may have mistyped or is using a cancelled card."
-            )
-            recommendations = [
-                "Prompt user to re-enter card details carefully",
-                "Suggest saved card or UPI payment",
-            ]
-        elif "AUTHENTICATION" in failure_type or "PIN" in failure_type:
-            severity = "LOW"
-            root_cause = "Authentication failure (wrong OTP or PIN)."
-            explanation = (
-                "The customer entered an incorrect OTP or UPI PIN. "
-                "This is common and usually resolves on retry."
-            )
-            recommendations = [
-                "Prompt user to re-enter OTP/PIN carefully",
-                "Ensure SMS delivery is not delayed",
-            ]
-        elif "LIMIT" in failure_type:
-            severity = "MEDIUM"
-            root_cause = "Transaction amount exceeds daily/per-transaction limit."
-            explanation = (
-                "The bank has set a limit on transaction amount that was exceeded. "
-                "Customer may need to increase their limit via bank app."
-            )
-            recommendations = [
-                "Suggest splitting into smaller payments",
-                "Suggest alternative payment method with higher limit",
-                "Guide customer to increase bank limit via mobile banking",
-            ]
-        elif "APP_NOT_RESPONDING" in failure_type or "SESSION" in failure_type:
-            severity = "LOW"
-            root_cause = "Payment app or banking session issue."
-            explanation = (
-                "The UPI app or net banking session experienced a timeout or crash. "
-                "Typically resolves by restarting the app or session."
-            )
-            recommendations = [
-                "Ask user to restart payment app",
-                "Retry in 5-10 minutes",
-            ]
+                "Recovery via salary-day retry or nudge to add funds.",
+                "MEDIUM",
+            ),
+            "BANK_TIMEOUT": (
+                "The acquiring or issuing bank server did not respond within the timeout threshold. "
+                "This is a transient infrastructure issue. Highly recoverable via exponential backoff retry.",
+                "LOW",
+            ),
+            "UPI_TIMEOUT": (
+                "The UPI collect request or intent flow timed out before the customer could approve in their UPI app. "
+                "Usually caused by notification delivery delays or customer distraction.",
+                "LOW",
+            ),
+            "NETWORK_ERROR": (
+                "A network transport error occurred between the payment gateway and the banking switch. "
+                "Transient issue, recommended immediate retry.",
+                "LOW",
+            ),
+            "EXPIRED_CARD": (
+                "The card used for payment has passed its expiration date. "
+                "Retrying the same card will not work. Customer must provide updated card or alternate payment method.",
+                "HIGH",
+            ),
+            "INVALID_CARD": (
+                "Card number, CVV, or expiry was entered incorrectly or the card is not enabled for online transactions. "
+                "Customer action required.",
+                "MEDIUM",
+            ),
+            "AUTHENTICATION_FAILED": (
+                "3D Secure OTP verification failed or OTP was not entered before expiry. "
+                "Customer was likely distracted or OTP delivery was delayed.",
+                "MEDIUM",
+            ),
+            "INCORRECT_PIN": (
+                "Customer entered an incorrect UPI PIN or ATM PIN. "
+                "Nudge customer to retry with correct credentials.",
+                "MEDIUM",
+            ),
+            "LIMIT_EXCEEDED": (
+                "Transaction amount exceeds daily or per-transaction limit set by bank or card issuer. "
+                "Suggest splitting payment or using an alternate method.",
+                "HIGH",
+            ),
+            "RISK_BLOCKED": (
+                "Transaction was flagged and blocked by automated fraud/risk rules. "
+                "Do not auto-retry. Requires manual review or customer identity verification.",
+                "CRITICAL",
+            ),
+            "APP_NOT_RESPONDING": (
+                "The customer's UPI or banking application crashed or failed to return a callback. "
+                "Transient client-side issue.",
+                "LOW",
+            ),
+            "SESSION_EXPIRED": (
+                "The checkout session timed out before payment completion. "
+                "Nudge customer with a pre-filled checkout link.",
+                "LOW",
+            ),
+        }
+
+        exp, sev = explanations.get(
+            ft,
+            ("Payment failed due to an unspecified gateway error. Standard retry recommended.", "MEDIUM")
+        )
 
         return RootCauseAnalysis(
-            transaction_id=transaction.id,
-            root_cause=root_cause,
-            explanation=explanation,
-            severity=severity,
-            recommended_actions=recommendations,
+            root_cause=f"Payment failed due to {ft.replace('_', ' ').lower()}.",
+            explanation=exp,
+            severity=sev,
+            recommended_actions=self._get_rule_actions(ft),
+            llm_model_used="rule-engine-fallback",
         )

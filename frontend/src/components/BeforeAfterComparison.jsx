@@ -13,19 +13,17 @@ export default function BeforeAfterComparison({ comparison }) {
   return (
     <div className="section-card before-after-card">
       <div className="card-header-clean">
-        <h3 className="section-title">AI Recovery vs Industry Baseline</h3>
+        <h3 className="section-title">Recovery vs Industry Baseline</h3>
       </div>
 
       <div className="comparison-content-layout">
-        {/* Baseline Box */}
         <div className="comparison-box box-baseline">
-          <div className="comp-badge-label">WITHOUT AI (BASELINE)</div>
+          <div className="comp-badge-label">WITHOUT RECOVERAI</div>
           <div className="comp-big-number color-red">{baselineRate}%</div>
           <div className="comp-sub-stat">{baselineTxns} transactions</div>
           <div className="comp-sub-stat">₹{baselineRevenue.toLocaleString('en-IN')} recovered</div>
         </div>
 
-        {/* Lift Indicator in center */}
         <div className="comparison-lift-col">
           <div className="lift-badge-val">+{liftRate}% <span className="lift-arrow-sym">↑</span></div>
           <div className="lift-sub-label">recovery lift</div>
@@ -36,7 +34,6 @@ export default function BeforeAfterComparison({ comparison }) {
           </div>
         </div>
 
-        {/* AI Box */}
         <div className="comparison-box box-ai">
           <div className="comp-badge-label">WITH RECOVERAI</div>
           <div className="comp-big-number color-green">{aiRate}%</div>

@@ -12,11 +12,9 @@ class RazorpayClientWrapper:
         self.client.set_app_details({"title": "RecoverAI", "version": "1.0"})
     
     async def _execute_with_retry(self, func, *args, **kwargs) -> Any:
-        # Simplistic async wrapper and retry mechanism
         retries = settings.MAX_RETRIES
         for attempt in range(retries):
             try:
-                # Running synchronous razorpay sdk calls in thread pool
                 loop = asyncio.get_event_loop()
                 result = await loop.run_in_executor(None, lambda: func(*args, **kwargs))
                 return result
@@ -46,8 +44,6 @@ class RazorpayClientWrapper:
         return await self._execute_with_retry(self.client.payment.all, data)
 
     async def fetch_failed_payments(self, skip: int = 0, count: int = 10) -> List[Dict[str, Any]]:
-        # Razorpay's payments API doesn't filter perfectly by status without expand, 
-        # but we simulate fetching failed payments by querying all and filtering.
         payments = await self.fetch_payments(skip=skip, count=count)
         return [p for p in payments.get("items", []) if p.get("status") == "failed"]
 
@@ -65,6 +61,6 @@ class RazorpayClientWrapper:
         }
         if customer_id:
             data["customer_id"] = customer_id
-        return await self._execute_with_retry(self.client.subscription.create, data)
+        return await self._execute_with_retry(self.client.subscription.create, data=data)
 
 razorpay_client = RazorpayClientWrapper()

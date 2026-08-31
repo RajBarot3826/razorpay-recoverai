@@ -7,20 +7,15 @@ from backend.models.schemas import PaymentTransaction, FailureClassification, Re
 logger = logging.getLogger(__name__)
 
 class EscalationAgent:
-    """
-    Flags transactions for human review when AI can't resolve.
-    """
     def __init__(self, amount_threshold: float = 10000.0):
         self.amount_threshold = amount_threshold
 
     async def evaluate_escalation(self, transaction: PaymentTransaction, classification: FailureClassification, previous_actions: List[RecoveryAction]) -> RecoveryAction:
         proposed_action = RecoveryAction(
             id=f"esc_{int(datetime.now(timezone.utc).timestamp()*1000)}",
-            transaction_id=transaction.id,
             action_type="ESCALATION",
             status="PENDING",
-            details="Evaluating escalation criteria...",
-            created_at=datetime.now(timezone.utc)
+            details={"notes": "Evaluating escalation criteria..."},
         )
         
         reasons = []
@@ -38,12 +33,11 @@ class EscalationAgent:
             
         if reasons:
             proposed_action.status = "COMPLETED"
-            proposed_action.details = "Escalation generated based on: " + ", ".join(reasons)
-            proposed_action.outcome = "Escalated to human queue."
+            proposed_action.details = {"reasons": reasons}
+            proposed_action.outcome = "Escalated to human review queue."
         else:
             proposed_action.status = "SKIPPED"
-            proposed_action.details = "Does not meet escalation criteria."
+            proposed_action.details = {"notes": "Does not meet escalation criteria."}
             proposed_action.outcome = "No escalation needed."
             
-        proposed_action.completed_at = datetime.now(timezone.utc)
         return proposed_action

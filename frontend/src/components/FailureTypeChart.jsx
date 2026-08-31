@@ -1,5 +1,4 @@
 export default function FailureTypeChart({ data }) {
-  // Pre-configured benchmark default data matching reference design
   const defaultItems = [
     { name: 'NETWORK ERROR', recovered: 100, failed: 0, count: 7 },
     { name: 'APP NOT RESPONDING', recovered: 100, failed: 0, count: 7 },
@@ -13,7 +12,6 @@ export default function FailureTypeChart({ data }) {
     { name: 'RISK BLOCKED', recovered: 0, failed: 100, count: 5 },
   ]
 
-  // If live data is provided, compute rates
   let items = defaultItems
   if (data && Object.keys(data).length > 0) {
     items = Object.entries(data).map(([key, stats]) => {
@@ -76,22 +74,18 @@ export default function FailureTypeChart({ data }) {
             </div>
           </div>
         ))}
-
-        {/* X-Axis Scale */}
-        <div className="bar-xaxis-scale">
-          <span className="axis-blank-space"></span>
-          <div className="axis-ticks-row">
-            <span>0</span>
-            <span>10</span>
-            <span>20</span>
-            <span>30</span>
-            <span>40</span>
-            <span>50</span>
-            <span>60</span>
-          </div>
-        </div>
-        <div className="axis-bottom-label">Count</div>
       </div>
+
+      <div className="chart-bottom-scale">
+        <span>0</span>
+        <span>10</span>
+        <span>20</span>
+        <span>30</span>
+        <span>40</span>
+        <span>50</span>
+        <span>60</span>
+      </div>
+      <div className="chart-x-axis-label">Count</div>
     </div>
   )
 }
