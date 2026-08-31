@@ -246,6 +246,8 @@ class CustomRecoveryRequest(BaseModel):
     failure_reason: str = "UPI transaction timed out waiting for bank approval"
     customer_name: str = "Aarav Sharma"
     customer_phone: str = "+91 98765 43210"
+    language: str = "hinglish" # "hinglish", "english", "hindi"
+    channel: str = "whatsapp" # "whatsapp", "sms", "email"
 
 class RazorpayOrderRequest(BaseModel):
     amount: float = 500.0  # In INR
@@ -253,9 +255,13 @@ class RazorpayOrderRequest(BaseModel):
     receipt: str = "rcpt_recoverai_001"
     notes: Dict[str, Any] = {}
 
-class ScenarioDemoRequest(BaseModel):
-    scenario: str = "FESTIVE_RUSH" # "FESTIVE_RUSH", "SALARY_DAY", "HIGH_VALUE_SAAS", "QUIET_HOURS"
-    count: int = 100
+class WebhookSimulateRequest(BaseModel):
+    event: str = "payment.failed"
+    amount: float = 3499.0
+    method: str = "upi"
+    error_code: str = "GATEWAY_TIMEOUT"
+    error_description: str = "Bank system timed out waiting for MPIN authorization"
+    customer_name: str = "Priya Patel"
 
 @app.post("/api/recover/custom")
 async def recover_custom_transaction(request: CustomRecoveryRequest):
@@ -285,15 +291,16 @@ async def recover_custom_transaction(request: CustomRecoveryRequest):
 
         result = await pipeline.process_single(tx)
         
-        # Generate dynamic personalized nudge
+        # Generate dynamic personalized nudge based on chosen language
         classification = pipeline.classifier.classify(tx)
-        nudge_action = await pipeline.nudge_agent.generate_nudge(tx, classification, language="hinglish")
+        nudge_action = await pipeline.nudge_agent.generate_nudge(tx, classification, language=request.language or "hinglish")
         
         return {
             "transaction": tx.model_dump(mode="json"),
             "result": result.model_dump(mode="json"),
             "personalized_nudge": {
-                "channel": "WhatsApp",
+                "channel": request.channel.capitalize() if request.channel else "WhatsApp",
+                "language": request.language or "hinglish",
                 "recipient": request.customer_name,
                 "phone": request.customer_phone,
                 "message": nudge_action.outcome or nudge_action.details,
@@ -303,6 +310,70 @@ async def recover_custom_transaction(request: CustomRecoveryRequest):
     except Exception as e:
         logger.error(f"Custom recovery error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/webhook/razorpay")
+async def handle_razorpay_webhook(payload: Dict[str, Any]):
+    """
+    Real Inbound Webhook Listener for Razorpay payment events.
+    Parses 'payment.failed' payloads, extracts Indian gateway metadata, and triggers AI recovery pipeline.
+    """
+    try:
+        event = payload.get("event", "payment.failed")
+        payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
+        
+        amount_inr = float(payment_entity.get("amount", 100000)) / 100.0
+        method = payment_entity.get("method", "upi")
+        error_desc = payment_entity.get("error_description") or payment_entity.get("error_reason") or "Payment authorization failed"
+        
+        tx_id = payment_entity.get("id") or f"pay_{uuid.uuid4().hex[:12]}"
+        tx = PaymentTransaction(
+            id=tx_id,
+            amount=amount_inr,
+            currency=payment_entity.get("currency", "INR"),
+            method=method,
+            status="failed",
+            failure_reason=error_desc,
+            customer_id=payment_entity.get("contact") or f"cust_{uuid.uuid4().hex[:6]}",
+            merchant_id=payment_entity.get("notes", {}).get("merchant_id", "merch_razorpay_01"),
+            timestamp=datetime.now(timezone.utc),
+            metadata=payment_entity
+        )
+        
+        result = await pipeline.process_single(tx)
+        return {
+            "status": "success",
+            "event_processed": event,
+            "transaction_id": tx_id,
+            "recovered": result.success,
+            "recovery_strategy": [a.action_type for a in result.actions_taken],
+            "audit_trail_entries": len(result.audit_trail)
+        }
+    except Exception as e:
+        logger.error(f"Webhook processing error: {e}")
+        return {"status": "error", "message": str(e)}
+
+@app.post("/api/webhook/simulate")
+async def simulate_webhook_event(req: WebhookSimulateRequest):
+    """Simulate inbound webhook payload from Razorpay."""
+    mock_payload = {
+        "event": req.event,
+        "payload": {
+            "payment": {
+                "entity": {
+                    "id": f"pay_live_{uuid.uuid4().hex[:10]}",
+                    "amount": int(req.amount * 100),
+                    "currency": "INR",
+                    "status": "failed",
+                    "method": req.method,
+                    "error_code": req.error_code,
+                    "error_description": req.error_description,
+                    "contact": f"+91 98{uuid.uuid4().hex[:8]}",
+                    "notes": {"customer_name": req.customer_name}
+                }
+            }
+        }
+    }
+    return await handle_razorpay_webhook(mock_payload)
 
 @app.post("/api/razorpay/create-order")
 async def create_live_razorpay_order(req: RazorpayOrderRequest):

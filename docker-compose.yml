@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-rzp_test_hQwBOBdYSadukv}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-DRh9gPRP7g0OGBgUy0SiThfV}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

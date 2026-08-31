@@ -2519,3 +2519,43 @@ body {
   font-size: 3rem;
   margin-bottom: 4px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   EXECUTIVE PRINT REPORT MEDIA STYLES
+   ═══════════════════════════════════════════════════════════════════ */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 10pt;
+  }
+
+  .sidebar,
+  .dashboard-top-header .header-actions-block,
+  .judge-demo-banner,
+  .gradient-run-btn,
+  .table-action-btn,
+  .floating-toast-alert,
+  .filter-toolbar-card,
+  .dashboard-bottom-footer {
+    display: none !important;
+  }
+
+  .dashboard-main-view {
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .section-card {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    page-break-inside: avoid;
+    margin-bottom: 16px !important;
+  }
+
+  .custom-tx-table {
+    width: 100% !important;
+    font-size: 8pt !important;
+  }
+}
