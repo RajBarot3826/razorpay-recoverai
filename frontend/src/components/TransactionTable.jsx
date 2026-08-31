@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 
 export default function TransactionTable({ results }) {
   const [expandedId, setExpandedId] = useState('txn_f229804a...') // Default expanded like in reference
@@ -161,9 +161,8 @@ export default function TransactionTable({ results }) {
             {txList.map((tx) => {
               const isExpanded = expandedId === tx.display_id || expandedId === tx.transaction_id
               return (
-                <>
+                <Fragment key={tx.transaction_id || tx.display_id}>
                   <tr
-                    key={tx.transaction_id}
                     className={`tx-row-item ${isExpanded ? 'row-expanded-parent' : ''}`}
                     onClick={() => toggleRow(tx.display_id || tx.transaction_id)}
                   >
@@ -273,7 +272,7 @@ export default function TransactionTable({ results }) {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               )
             })}
           </tbody>

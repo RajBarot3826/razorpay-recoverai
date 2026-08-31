@@ -90,8 +90,10 @@ function App() {
             {/* Run Recovery Control Bar */}
             <div className="run-controls-row">
               <div className="count-picker-box">
-                <label className="count-label">Transactions to process</label>
+                <label htmlFor="tx-count-input" className="count-label">Transactions to process</label>
                 <input
+                  id="tx-count-input"
+                  name="tx-count-input"
                   type="number"
                   className="count-number-input"
                   value={count}
