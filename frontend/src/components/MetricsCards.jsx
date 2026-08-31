@@ -15,7 +15,7 @@ export default function MetricsCards({ metrics, summary }) {
       trendUp: true,
       color: 'blue',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
           <path d="M6 12v5c3 3 9 3 12 0v-5"/>
         </svg>
@@ -31,7 +31,7 @@ export default function MetricsCards({ metrics, summary }) {
       trendUp: true,
       color: 'green',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
@@ -47,7 +47,7 @@ export default function MetricsCards({ metrics, summary }) {
       trendUp: false,
       color: 'red',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="10"/>
           <line x1="15" y1="9" x2="9" y2="15"/>
           <line x1="9" y1="9" x2="15" y2="15"/>
@@ -62,9 +62,9 @@ export default function MetricsCards({ metrics, summary }) {
       subtitle: 'saved from failed payments',
       trend: '31.2% vs yesterday',
       trendUp: true,
-      color: 'gold',
+      color: 'amber',
       icon: (
-        <span style={{ fontSize: '18px', fontWeight: 800, fontFamily: 'system-ui' }}>₹</span>
+        <span style={{ fontSize: '16px', fontWeight: 800, fontFamily: 'system-ui' }}>₹</span>
       ),
       sparklinePoints: '0,24 15,22 30,19 45,17 60,12 75,10 90,5 100,4',
     },
@@ -77,7 +77,7 @@ export default function MetricsCards({ metrics, summary }) {
       trendUp: true,
       color: 'purple',
       icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="20" x2="18" y2="10"/>
           <line x1="12" y1="20" x2="12" y2="4"/>
           <line x1="6" y1="20" x2="6" y2="14"/>
@@ -88,33 +88,31 @@ export default function MetricsCards({ metrics, summary }) {
   ]
 
   return (
-    <div className="metrics-cards-row">
+    <div className="metrics-row-container">
       {cards.map((card) => (
-        <div key={card.id} className={`metric-card border-${card.color}`}>
-          <div className="card-top-header">
-            <span className="card-title-text">{card.title}</span>
-            <span className="card-dots-icon">•••</span>
-          </div>
-
-          <div className="card-primary-content">
-            <div className={`metric-icon-box bg-${card.color}`}>
+        <div key={card.id} className="kpi-card">
+          <div className="kpi-top">
+            <div className="kpi-header-info">
+              <span className="kpi-title">{card.title}</span>
+            </div>
+            <div className={`kpi-icon-badge badge-${card.color}`}>
               {card.icon}
             </div>
-            <div className="metric-value-number">{card.value}</div>
           </div>
 
-          <div className="metric-subtitle-text">{card.subtitle}</div>
+          <div className="kpi-main-val">{card.value}</div>
+          <div className="kpi-subtext">{card.subtitle}</div>
 
-          <div className="card-bottom-sparkline-row">
-            <div className={`trend-indicator-text ${card.trendUp ? 'trend-green' : 'trend-red'}`}>
+          <div className="kpi-bottom">
+            <div className={`kpi-trend ${card.trendUp ? 'trend-up' : 'trend-down'}`}>
               <span className="trend-arrow">{card.trendUp ? '↑' : '↓'}</span>
               {card.trend}
             </div>
             <div className="sparkline-wrapper">
-              <svg width="72" height="24" viewBox="0 0 100 24" fill="none">
+              <svg width="60" height="20" viewBox="0 0 100 24" fill="none">
                 <polyline
                   points={card.sparklinePoints}
-                  className={`sparkline-path stroke-${card.color}`}
+                  stroke={card.color === 'blue' ? '#2563eb' : card.color === 'green' ? '#10b981' : card.color === 'red' ? '#ef4444' : card.color === 'amber' ? '#f59e0b' : '#8b5cf6'}
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
