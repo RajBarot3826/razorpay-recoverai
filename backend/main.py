@@ -226,7 +226,7 @@ async def recover_custom_transaction(request: CustomRecoveryRequest):
                 "language": request.language or "hinglish",
                 "recipient": request.customer_name,
                 "phone": request.customer_phone,
-                "message": nudge_action.outcome or nudge_action.details,
+                "message": nudge_action.outcome or (nudge_action.details.get("message") if isinstance(nudge_action.details, dict) else str(nudge_action.details)),
                 "cta_url": f"https://rzp.io/i/{tx_id}"
             }
         }
