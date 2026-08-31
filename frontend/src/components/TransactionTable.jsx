@@ -192,7 +192,7 @@ export default function TransactionTable({ results }) {
     <div className="section-card transaction-table-card">
       <div className="card-header-clean">
         <h3 className="section-title">
-          Transaction Details <span className="title-count-paren">({totalItems} total)</span>
+          Transaction Details <span className="title-count-tag">({totalItems} total)</span>
         </h3>
       </div>
 
@@ -215,7 +215,7 @@ export default function TransactionTable({ results }) {
               return (
                 <Fragment key={tx.transaction_id}>
                   <tr
-                    className={`tx-row-item ${isExpanded ? 'row-expanded' : ''}`}
+                    className={`tx-row-item ${isExpanded ? 'row-expanded-parent' : ''}`}
                     onClick={() => setExpandedId(isExpanded ? null : tx.transaction_id)}
                   >
                     <td className="col-txid">
@@ -226,7 +226,7 @@ export default function TransactionTable({ results }) {
                     </td>
                     <td className="col-failure">
                       <span className="tx-failure-pill">
-                        {tx.has_diamond && <span className="diamond-bullet">◆</span>}
+                        {tx.has_diamond && <span className="diamond-icon">◆</span>}
                         {tx.failure_type}
                       </span>
                     </td>
@@ -243,37 +243,26 @@ export default function TransactionTable({ results }) {
                       <span className="tx-actions-count">{tx.actions_count}</span>
                     </td>
                     <td className="col-time">
-                      <div className="tx-time-wrapper">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span className="tx-time-text">{tx.time}</span>
-                        <span className={`expand-chevron ${isExpanded ? 'open' : ''}`}>›</span>
+                        <span className="row-toggle-chevron">{isExpanded ? '⌄' : '›'}</span>
                       </div>
                     </td>
                   </tr>
 
                   {isExpanded && (
-                    <tr className="tx-audit-detail-row">
-                      <td colSpan="7">
-                        <div className="audit-panel-grid">
-                          <div className="audit-left-info">
-                            <div className="audit-section-heading">ML CONFIDENCE SCORE</div>
-                            <div className="audit-confidence-block">
-                              <span className="confidence-score-number">
+                    <tr>
+                      <td colSpan="7" className="expanded-detail-cell">
+                        <div className="audit-detail-panel">
+                          <div className="audit-left-stats">
+                            <div className="audit-kpi-block">
+                              <span className="audit-kpi-label">ML CONFIDENCE SCORE</span>
+                              <span className="audit-kpi-val blue">
                                 {Math.round(tx.confidence_score * 100)}%
                               </span>
-                              <span className="confidence-meter-bar">
-                                <span
-                                  className="confidence-fill"
-                                  style={{ width: `${Math.round(tx.confidence_score * 100)}%` }}
-                                ></span>
+                              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                                Category: <strong>{tx.failure_type}</strong>
                               </span>
-                            </div>
-                            <div className="audit-meta-line">
-                              <span className="meta-key">Failure Category:</span>
-                              <span className="meta-val">{tx.failure_type}</span>
-                            </div>
-                            <div className="audit-meta-line">
-                              <span className="meta-key">Root Diagnostic:</span>
-                              <span className="meta-val">{tx.root_cause}</span>
                             </div>
                           </div>
 
@@ -305,9 +294,9 @@ export default function TransactionTable({ results }) {
                                 return (
                                   <div key={idx} className="timeline-node-item">
                                     <span className={`timeline-node-dot ${isExec ? 'green' : 'blue'}`}></span>
-                                    <span className="node-agent-name">{entry.agent_name}</span>
-                                    <span className="node-action-verb">{entry.action}</span>
-                                    <span className="node-result-desc">{entry.outcome}</span>
+                                    <strong style={{ color: 'var(--text-dark)' }}>{entry.agent_name}</strong>
+                                    <span style={{ color: '#2563eb', fontWeight: 600 }}>{entry.action}</span>
+                                    <span style={{ color: 'var(--text-muted)' }}>{entry.outcome}</span>
                                   </div>
                                 )
                               })}
@@ -324,11 +313,12 @@ export default function TransactionTable({ results }) {
         </table>
       </div>
 
-      <div className="table-pagination-footer">
-        <div className="pagination-info">Showing {showingStart} to {showingEnd} of {totalItems} transactions</div>
-        <div className="pagination-controls">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', borderTop: '1px solid var(--border-card)' }}>
+        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Showing {showingStart} to {showingEnd} of {totalItems} transactions</div>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
           <button 
-            className="page-arrow-btn" 
+            className="filter-pill-btn" 
+            style={{ padding: '2px 8px', fontSize: '0.72rem' }}
             onClick={handlePrevPage}
             disabled={safeCurrentPage === 1}
           >
@@ -337,11 +327,12 @@ export default function TransactionTable({ results }) {
           
           {getPageNumbers().map((page, index) => (
             page === '...' ? (
-              <span key={`ellipsis-${index}`} className="page-ellipsis">..</span>
+              <span key={`ellipsis-${index}`} style={{ padding: '0 4px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>..</span>
             ) : (
               <button 
                 key={page} 
-                className={`page-number-btn ${safeCurrentPage === page ? 'active' : ''}`} 
+                className={`filter-pill-btn ${safeCurrentPage === page ? 'active' : ''}`} 
+                style={{ padding: '2px 8px', fontSize: '0.72rem' }}
                 onClick={() => handlePageClick(page)}
               >
                 {page}
@@ -350,7 +341,8 @@ export default function TransactionTable({ results }) {
           ))}
           
           <button 
-            className="page-arrow-btn" 
+            className="filter-pill-btn" 
+            style={{ padding: '2px 8px', fontSize: '0.72rem' }}
             onClick={handleNextPage}
             disabled={safeCurrentPage === totalPages}
           >

@@ -15,7 +15,7 @@ export default function ActionTypeChart({ data }) {
     escalation = Math.max(1, 100 - smartRetry - altMethod)
   }
 
-  const radius = 54
+  const radius = 50
   const circumference = 2 * Math.PI * radius
 
   const srStroke = (smartRetry / 100) * circumference
@@ -41,7 +41,7 @@ export default function ActionTypeChart({ data }) {
               r={radius}
               fill="none"
               stroke="#f1f5f9"
-              strokeWidth="16"
+              strokeWidth="14"
             />
 
             <circle
@@ -49,8 +49,8 @@ export default function ActionTypeChart({ data }) {
               cy="70"
               r={radius}
               fill="none"
-              stroke="#3b82f6"
-              strokeWidth="16"
+              stroke="#2563eb"
+              strokeWidth="14"
               strokeDasharray={`${srStroke} ${circumference}`}
               strokeDashoffset={srOffset}
               transform="rotate(-90 70 70)"
@@ -62,7 +62,7 @@ export default function ActionTypeChart({ data }) {
               r={radius}
               fill="none"
               stroke="#10b981"
-              strokeWidth="16"
+              strokeWidth="14"
               strokeDasharray={`${amStroke} ${circumference}`}
               strokeDashoffset={amOffset}
               transform="rotate(-90 70 70)"
@@ -73,37 +73,34 @@ export default function ActionTypeChart({ data }) {
               cy="70"
               r={radius}
               fill="none"
-              stroke="#f59e0b"
-              strokeWidth="16"
+              stroke="#8b5cf6"
+              strokeWidth="14"
               strokeDasharray={`${escStroke} ${circumference}`}
               strokeDashoffset={escOffset}
               transform="rotate(-90 70 70)"
             />
           </svg>
 
-          <div className="donut-center-text">
-            <span className="donut-center-total">{totalCount}</span>
-            <span className="donut-center-label">actions</span>
+          <div className="donut-center-info">
+            <div className="donut-count">{totalCount}</div>
+            <div className="donut-sublabel">ACTIONS</div>
           </div>
         </div>
 
-        <div className="donut-legend-column">
-          <div className="donut-legend-entry">
-            <span className="legend-marker bg-blue"></span>
-            <span className="legend-text-label">SMART RETRY</span>
-            <span className="legend-pct-val">{smartRetry}%</span>
+        <div className="donut-legend-list">
+          <div className="legend-row">
+            <span className="legend-box blue"></span>
+            <span className="legend-name">SMART RETRY ({smartRetry}%)</span>
           </div>
 
-          <div className="donut-legend-entry">
-            <span className="legend-marker bg-green"></span>
-            <span className="legend-text-label">ALTERNATIVE METHOD</span>
-            <span className="legend-pct-val">{altMethod}%</span>
+          <div className="legend-row">
+            <span className="legend-box green"></span>
+            <span className="legend-name">ALTERNATIVE METHOD ({altMethod}%)</span>
           </div>
 
-          <div className="donut-legend-entry">
-            <span className="legend-marker bg-gold"></span>
-            <span className="legend-text-label">ESCALATION</span>
-            <span className="legend-pct-val">{escalation}%</span>
+          <div className="legend-row">
+            <span className="legend-box purple"></span>
+            <span className="legend-name">ESCALATION ({escalation}%)</span>
           </div>
         </div>
       </div>

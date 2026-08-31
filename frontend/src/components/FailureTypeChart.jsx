@@ -55,7 +55,7 @@ export default function FailureTypeChart({ data }) {
                     title={`Recovered: ${item.recovered}%`}
                   >
                     {item.recovered >= 15 && (
-                      <span className="bar-pct-label text-recovered">{item.recovered}%</span>
+                      <span className="bar-pct-label">{item.recovered}%</span>
                     )}
                   </div>
                 )}
@@ -66,7 +66,7 @@ export default function FailureTypeChart({ data }) {
                     title={`Failed: ${item.failed}%`}
                   >
                     {item.failed >= 15 && (
-                      <span className="bar-pct-label text-failed">{item.failed}%</span>
+                      <span className="bar-pct-label">{item.failed}%</span>
                     )}
                   </div>
                 )}
@@ -76,16 +76,17 @@ export default function FailureTypeChart({ data }) {
         ))}
       </div>
 
-      <div className="chart-bottom-scale">
-        <span>0</span>
-        <span>10</span>
-        <span>20</span>
-        <span>30</span>
-        <span>40</span>
-        <span>50</span>
-        <span>60</span>
+      <div className="bar-xaxis-scale">
+        <div className="axis-blank-space"></div>
+        <div className="axis-ticks-row">
+          <span>0%</span>
+          <span>25%</span>
+          <span>50%</span>
+          <span>75%</span>
+          <span>100%</span>
+        </div>
       </div>
-      <div className="chart-x-axis-label">Count</div>
+      <div className="axis-bottom-label">Recovery Success Rate</div>
     </div>
   )
 }
