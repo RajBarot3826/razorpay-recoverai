@@ -182,7 +182,7 @@ async def demo_full_pipeline(request: SimulateRequest):
             },
             "metrics": metrics.model_dump(),
             "before_after": comparison,
-            "sample_results": [r.model_dump(mode="json") for r in results[:5]],
+            "sample_results": [r.model_dump(mode="json") for r in results],
         }
     except Exception as e:
         logger.error(f"Demo pipeline error: {e}")

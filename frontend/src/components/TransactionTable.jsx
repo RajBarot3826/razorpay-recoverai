@@ -107,19 +107,49 @@ export default function TransactionTable({ results }) {
     },
   ]
 
-  // Map API results if provided
-  let txList = defaultTransactions
-  if (results && results.length > 0) {
-    txList = results.slice(0, 10).map((r, i) => ({
-      transaction_id: r.transaction_id || `txn_${i}`,
-      display_id: (r.transaction_id || '').slice(0, 14) + '...',
+  const baseData = (results && results.length > 0) ? results : defaultTransactions
+  const itemsPerPage = 10
+  const totalItems = baseData.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage))
+  
+  // Ensure current page is valid when results change
+  const safeCurrentPage = Math.min(currentPage, totalPages)
+  
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+
+  // Generate realistic timestamps from current date/time
+  const getTimestamp = (absoluteIndex) => {
+    const now = new Date()
+    // Spread across last hour with random-like offsets based on index
+    now.setMinutes(now.getMinutes() - ((absoluteIndex * 13) % 60))
+    return now.toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    }).replace('am', 'AM').replace('pm', 'PM')
+  }
+
+  const txList = baseData.slice(startIndex, endIndex).map((r, i) => {
+    const absoluteIndex = startIndex + i
+    const timeString = getTimestamp(absoluteIndex)
+
+    if (!results || results.length === 0) {
+      return { ...r, time: timeString }
+    }
+
+    return {
+      transaction_id: r.transaction_id || `txn_${absoluteIndex}`,
+      display_id: (r.transaction_id || `txn_${absoluteIndex}`).slice(0, 14) + '...',
       original_amount: r.original_amount || 1000,
       failure_type: (r.failure_type || 'UNKNOWN').replace(/_/g, ' '),
-      has_diamond: (r.failure_type || '').includes('INSUFFICIENT'),
+      has_diamond: r.has_diamond !== undefined ? r.has_diamond : (r.failure_type || '').includes('INSUFFICIENT'),
       root_cause: r.root_cause || 'Transaction failed during gateway processing',
       success: !!r.success,
-      actions_count: `${(r.actions_taken || []).length || 1} action(s)`,
-      time: '31 May, 11:32 AM',
+      actions_count: r.actions_count || `${(r.actions_taken || []).length || 1} action(s)`,
+      time: timeString,
       confidence_score: r.confidence_score || 0.26,
       actions_taken: r.actions_taken && r.actions_taken.length > 0 ? r.actions_taken : [
         { action_type: 'SMART RETRY', status: r.success ? 'SCHEDULED' : 'BLOCKED', outcome: r.success ? 'Recovery successful' : 'Retry limit exceeded' },
@@ -130,17 +160,55 @@ export default function TransactionTable({ results }) {
         { agent_name: 'StrategyEngine', action: 'DECIDE_STRATEGY', outcome: 'SMART_RETRY' },
         { agent_name: 'SMART_RETRYAgent', action: 'EXECUTE', outcome: r.success ? 'Recovery successful' : 'Recovery failed' },
       ],
-    }))
-  }
+    }
+  })
 
   const toggleRow = (id) => {
     setExpandedId(expandedId === id ? null : id)
   }
 
+  // Generate pagination buttons
+  const getPageNumbers = () => {
+    const pages = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (safeCurrentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, '...', totalPages)
+      } else if (safeCurrentPage >= totalPages - 3) {
+        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', totalPages)
+      }
+    }
+    return pages
+  }
+
+  const showingStart = totalItems === 0 ? 0 : startIndex + 1
+  const showingEnd = Math.min(endIndex, totalItems)
+
+  const handlePrevPage = () => {
+    if (safeCurrentPage > 1) {
+      setCurrentPage(safeCurrentPage - 1)
+    }
+  }
+
+  const handleNextPage = () => {
+    if (safeCurrentPage < totalPages) {
+      setCurrentPage(safeCurrentPage + 1)
+    }
+  }
+
+  const handlePageClick = (page) => {
+    if (page !== '...') {
+      setCurrentPage(page)
+    }
+  }
+
   return (
     <div className="section-card transaction-table-card">
       <div className="card-header-clean">
-        <h3 className="section-title">Transaction Details <span className="title-count-tag">(100 shown)</span></h3>
+        <h3 className="section-title">Transaction Details <span className="title-count-tag">({totalItems} total)</span></h3>
       </div>
 
       <div className="table-responsive-wrapper">
@@ -281,14 +349,37 @@ export default function TransactionTable({ results }) {
 
       {/* Pagination Footer */}
       <div className="table-pagination-footer">
-        <div className="pagination-info">Showing 1 to 5 of 100 transactions</div>
+        <div className="pagination-info">Showing {showingStart} to {showingEnd} of {totalItems} transactions</div>
         <div className="pagination-controls">
-          <button className={`page-number-btn ${currentPage === 1 ? 'active' : ''}`} onClick={() => setCurrentPage(1)}>1</button>
-          <button className={`page-number-btn ${currentPage === 2 ? 'active' : ''}`} onClick={() => setCurrentPage(2)}>2</button>
-          <button className={`page-number-btn ${currentPage === 3 ? 'active' : ''}`} onClick={() => setCurrentPage(3)}>3</button>
-          <span className="page-ellipsis">..</span>
-          <button className="page-number-btn" onClick={() => setCurrentPage(20)}>20</button>
-          <button className="page-arrow-btn">›</button>
+          <button 
+            className="page-arrow-btn" 
+            onClick={handlePrevPage}
+            disabled={safeCurrentPage === 1}
+          >
+            ‹
+          </button>
+          
+          {getPageNumbers().map((page, index) => (
+            page === '...' ? (
+              <span key={`ellipsis-${index}`} className="page-ellipsis">..</span>
+            ) : (
+              <button 
+                key={page} 
+                className={`page-number-btn ${safeCurrentPage === page ? 'active' : ''}`} 
+                onClick={() => handlePageClick(page)}
+              >
+                {page}
+              </button>
+            )
+          ))}
+          
+          <button 
+            className="page-arrow-btn" 
+            onClick={handleNextPage}
+            disabled={safeCurrentPage === totalPages}
+          >
+            ›
+          </button>
         </div>
       </div>
     </div>
