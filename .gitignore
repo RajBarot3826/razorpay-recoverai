@@ -38,3 +38,11 @@ out/
 
 # Logs
 *.log
+
+# Test & capture artifacts
+audit_screenshots/
+audit_ui.py
+verify_system.py
+record_walkthrough.py
+test_pipeline.py
+recordings/

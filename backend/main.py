@@ -9,8 +9,6 @@ from pydantic import BaseModel
 from backend.db import init_db
 from backend.models.schemas import (
     PaymentTransaction,
-    RecoveryResult,
-    RecoveryMetrics,
     SimulateRequest,
 )
 from backend.pipeline.recovery_pipeline import RecoveryPipeline

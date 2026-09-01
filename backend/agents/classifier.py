@@ -1,5 +1,4 @@
 import os
-import datetime
 import logging
 import re
 from typing import List, Dict, Any, Optional
@@ -8,8 +7,8 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_recall_fscore_support
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
 
 from backend.models.schemas import PaymentTransaction, FailureClassification
 from backend.simulator.failure_generator import PaymentFailureSimulator

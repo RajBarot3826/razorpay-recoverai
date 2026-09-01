@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 export default function Sidebar({ activeTab, setActiveTab }) {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: '🏠' },

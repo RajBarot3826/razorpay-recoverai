@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import Dict, Any
 from backend.models.schemas import RecoveryResult, RecoveryMetrics
 
 class MetricsCollector:

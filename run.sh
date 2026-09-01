@@ -1,5 +1,4 @@
 #!/bin/bash
-# RecoverAI — 1-Click Launcher (Linux / macOS)
 
 set -e
 
@@ -48,8 +47,8 @@ cd frontend && npm run dev -- --port 3000 &
 FRONTEND_PID=$!
 
 echo "[SUCCESS] RecoverAI is running!"
-echo "👉 Frontend: http://localhost:3000"
-echo "👉 Backend:  http://localhost:8000/docs"
+echo "[*] Frontend: http://localhost:3000"
+echo "[*] Backend:  http://localhost:8000/docs"
 
 # Wait for both processes
 trap "kill $BACKEND_PID $FRONTEND_PID" EXIT

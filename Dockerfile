@@ -1,4 +1,3 @@
-# Multi-stage Dockerfile for RecoverAI (Backend + Frontend)
 FROM python:3.11-slim as backend
 
 WORKDIR /app
@@ -12,7 +11,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./backend/
-COPY .env* ./
 
 EXPOSE 8000
 

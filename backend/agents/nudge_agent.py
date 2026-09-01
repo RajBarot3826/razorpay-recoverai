@@ -1,7 +1,6 @@
 import logging
 import random
 from datetime import datetime, timezone
-from typing import Optional
 
 from backend.models.schemas import PaymentTransaction, FailureClassification, RecoveryAction
 from backend.compliance.guardrails import ComplianceGuardrails

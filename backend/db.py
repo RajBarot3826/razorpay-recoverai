@@ -7,7 +7,6 @@ from contextlib import contextmanager
 
 from .config import settings
 
-# Create data directory relative to project root (parent of backend/)
 _project_root = Path(__file__).resolve().parent.parent
 _data_dir = _project_root / "data"
 _data_dir.mkdir(parents=True, exist_ok=True)

@@ -132,12 +132,10 @@ SCENARIOS_REGISTRY = [
 ]
 
 def get_scenario(failure_type: str) -> Optional[FailureScenario]:
-    """Retrieve a failure scenario by its type."""
     for scenario in SCENARIOS_REGISTRY:
         if scenario.failure_type == failure_type:
             return scenario
     return None
 
 def get_recoverable_scenarios() -> List[FailureScenario]:
-    """Retrieve all recoverable failure scenarios."""
     return [s for s in SCENARIOS_REGISTRY if s.is_recoverable]

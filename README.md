@@ -103,7 +103,7 @@ If API keys are omitted, the engine automatically operates in offline benchmark 
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/demo` | Runs benchmark recovery simulation on $N$ transactions |
+| `POST` | `/api/demo` | Runs benchmark recovery simulation on N transactions |
 | `POST` | `/api/recover/custom` | Runs diagnosis on a single transaction payload |
 | `POST` | `/api/razorpay/create-order` | Generates a test order via Razorpay API |
 | `POST` | `/api/webhook/razorpay` | Ingests live Razorpay webhook events |
