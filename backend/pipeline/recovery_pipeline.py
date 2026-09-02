@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 from backend.models.schemas import (
     PaymentTransaction,
     RecoveryResult,
+    RecoveryMetrics,
     FailureClassification,
     RootCauseAnalysis,
     RecoveryAction,
