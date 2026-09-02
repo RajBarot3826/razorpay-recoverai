@@ -36,7 +36,6 @@ class FailureClassifier:
         self.model_path = model_path
         self.encoder_path = encoder_path
         self.label_encoders = {}
-        self.scaler = StandardScaler()
         self.target_encoder = LabelEncoder()
 
         if os.path.exists(self.model_path) and os.path.exists(self.encoder_path):
