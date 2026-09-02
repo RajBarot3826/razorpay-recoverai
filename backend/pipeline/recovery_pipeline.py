@@ -1,6 +1,6 @@
 import logging
 import random
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from backend.models.schemas import (
     PaymentTransaction,
