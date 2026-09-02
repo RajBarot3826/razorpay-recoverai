@@ -16,29 +16,29 @@ RecoverAI is a multi-agent AI system designed to detect, diagnose, and recover f
 
 ```mermaid
 flowchart TB
-    subgraph Ingestion["📥 Ingestion Layer"]
+    subgraph Ingestion["Ingestion Layer"]
         SIM["Payment Failure Simulator"]
         RZP["Razorpay Test-Mode API"]
     end
 
-    subgraph Analysis["🔍 Analysis Layer"]
+    subgraph Analysis["Analysis Layer"]
         CLS["ML Failure Classifier<br/>(RandomForest)"]
         RCA["LLM Root Cause Analyzer<br/>(GPT-4 / Gemini)"]
     end
 
-    subgraph Decision["🧠 Decision Layer"]
+    subgraph Decision["Decision Layer"]
         SE["Recovery Strategy Engine"]
         CG["Compliance Guardrails"]
     end
 
-    subgraph Execution["⚡ Execution Layer"]
+    subgraph Execution["Execution Layer"]
         RA["Smart Retry Agent"]
         NA["Customer Nudge Agent<br/>(English + Hinglish)"]
         AA["Alternative Payment Agent"]
         EA["Escalation Agent"]
     end
 
-    subgraph Monitoring["📊 Monitoring Layer"]
+    subgraph Monitoring["Monitoring Layer"]
         AL["Audit Trail Logger"]
         MC["Metrics Collector"]
         DB["Recovery Dashboard"]

@@ -1,6 +1,6 @@
 <div align="center">
 
-# ⚡ RecoverAI
+# RecoverAI
 ### Autonomous AI Payment Revenue Recovery Engine for Razorpay
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://razorpay-recoverai.vercel.app)
@@ -12,15 +12,15 @@
   <strong>Intelligently diagnose failed payments, orchestrate multi-agent recovery flows, and enforce RBI compliance in real time.</strong>
 </p>
 
-[Explore Live Demo](https://razorpay-recoverai.vercel.app) • [Quick Start](#-quick-start) • [Architecture](#-system-architecture) • [API Specs](#-api-endpoint-reference)
+[Explore Live Demo](https://razorpay-recoverai.vercel.app) • [Quick Start](#quick-start) • [Architecture](#system-architecture) • [API Specs](#api-endpoint-reference)
 
 ---
 
 </div>
 
-## 📌 Problem & Business Impact
+## Problem and Business Impact
 
-In India, payment failures cost digital merchants over **₹15,000 Crores annually** due to UPI drop-offs, acquiring bank switch latencies, and month-end balance constraints. Traditional payment systems rely on dumb, uncoordinated retries that achieve an industry baseline recovery rate of only **~15%**.
+In India, payment failures cost digital merchants over **₹15,000 Crores annually** due to UPI drop-offs, acquiring bank switch latencies, and month-end balance constraints. Traditional payment systems rely on uncoordinated retries that achieve an industry baseline recovery rate of only **~15%**.
 
 **RecoverAI** transforms failure handling into an autonomous, multi-agent recovery lifecycle tailored specifically for Indian payment rails (**UPI, RuPay, NetBanking, Cards**):
 
@@ -35,7 +35,7 @@ In India, payment failures cost digital merchants over **₹15,000 Crores annual
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 ```
                                ┌─────────────────────────────┐
@@ -72,7 +72,7 @@ In India, payment failures cost digital merchants over **₹15,000 Crores annual
 
 ---
 
-## 🤖 Multi-Agent Recovery Orchestration
+## Multi-Agent Recovery Orchestration
 
 RecoverAI deploys 4 specialized agents that work in concert:
 
@@ -83,7 +83,7 @@ RecoverAI deploys 4 specialized agents that work in concert:
 | **Alternative Payment Agent** | Dynamic payment rail routing | Expired cards, per-transaction velocity limits | Generates instant UPI Intent link / NetBanking swap (95% conversion) |
 | **VIP Escalation Agent** | High-touch concierge routing | High-ticket purchases (>₹10,000) | Assigns transaction to merchant desk with pre-filled context |
 
-### 💬 Multilingual Nudge Copy Examples
+### Multilingual Nudge Copy Examples
 
 * **Hinglish (WhatsApp)**:  
   `"Hi Aarav! Aapka ₹2,499 ka payment balance issue ki wajah se ruk gaya. Click karke bina friction dubara complete karein: https://rzp.io/l/rec_xyz"`
@@ -94,7 +94,7 @@ RecoverAI deploys 4 specialized agents that work in concert:
 
 ---
 
-## 🛡️ 12 Supported Failure Topologies
+## Failure Topologies
 
 1. **UPI_TIMEOUT**: Switch latency and collect request expiration (handled via optimized retry window).
 2. **INSUFFICIENT_FUNDS**: Non-sufficient balance (handled via salary-day scheduled retries and WhatsApp nudges).
@@ -111,7 +111,7 @@ RecoverAI deploys 4 specialized agents that work in concert:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1-Click Launchers (Zero Manual Setup)
 
@@ -158,7 +158,7 @@ npm run dev -- --port 3000
 
 ---
 
-## ⚙️ Environment Configuration
+## Environment Configuration
 
 Copy `.env.example` to `.env` to configure credentials:
 
@@ -175,11 +175,11 @@ NUDGE_QUIET_START=21
 NUDGE_QUIET_END=8
 ```
 
-*Note: If API keys are omitted, the engine automatically operates in offline benchmark simulation mode with 0 errors.*
+*Note: If API keys are omitted, the engine automatically operates in offline benchmark simulation mode.*
 
 ---
 
-## 📡 API Endpoint Reference
+## API Endpoint Reference
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -195,7 +195,7 @@ NUDGE_QUIET_END=8
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 * **Backend**: Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy, Scikit-Learn, Pandas, NumPy
 * **AI & LLM Services**: Google Gemini 2.5 Flash, OpenAI GPT-4o, Random Forest Classifier
@@ -205,6 +205,6 @@ NUDGE_QUIET_END=8
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
